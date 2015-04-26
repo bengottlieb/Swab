@@ -8,6 +8,8 @@
 
 import Foundation
 import AddressBook
+import AddressBookUI
+import UIKit
 
 public class Swab: NSObject {
 	public class var instance: Swab { struct s { static let manager = Swab() }; return s.manager }
@@ -58,7 +60,7 @@ public class Swab: NSObject {
 		})
 	}
 	
-	public func findAllPeopleWith(firstName: String? = nil, lastName: String? = nil, company: String? = nil, completion: ([SwabRecord]) -> Void) {
+	public func findAllPeopleWith(firstName: String? = nil, lastName: String? = nil, company: String? = nil, fields: Set<ABPropertyID>? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
 		self.fetchAddressBook { book in
 			var empty = ""
 			var full: String = "\(firstName ?? empty) \(lastName ?? empty)".stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
@@ -68,7 +70,9 @@ public class Swab: NSObject {
 				if let searchString = string {
 					if let found = ABAddressBookCopyPeopleWithName(book, searchString).takeRetainedValue() as? [ABRecord] {
 						for record in found {
-							if let swab = SwabRecord(record: record) { records.append(swab) }
+							let swab = self.recordWithABRecord(record)
+							if let fields = fields { swab.load(fields: fields) }
+							records.append(swab)
 						}
 					}
 				}
@@ -80,7 +84,7 @@ public class Swab: NSObject {
 	public func findRecordWithID(recordID: ABRecordID, completion: (SwabRecord?) -> Void) {
 		self.fetchAddressBook { book in
 			var record: ABRecord? = ABAddressBookGetPersonWithRecordID(book, recordID)?.takeRetainedValue()
-			completion(SwabRecord(record: record))
+			completion(record == nil ? nil : self.recordWithABRecord(record!))
 		}
 	}
 	
@@ -95,6 +99,23 @@ public class Swab: NSObject {
 	var pendingAuthorizations: [(Bool) -> Void] = []
 	let queue: NSOperationQueue = { var queue = NSOperationQueue(); queue.maxConcurrentOperationCount = 1; return queue }()
 	internal var addressBook: ABAddressBook!
+	internal var recordCache: [ABRecordID: SwabRecord] = [:]
 	
+	internal func recordWithABRecordID(id: ABRecordID) -> SwabRecord? {
+		if let record = self.recordCache[id] { return record }
+		return nil
+	}
 	
+	internal func recordWithABRecord(rec: ABRecord) -> SwabRecord {
+		let recordID = ABRecordGetRecordID(rec)
+		if let existing = self.recordWithABRecordID(recordID) { return existing }
+		
+		let record = SwabRecord()
+		record.ref = rec
+		self.recordCache[recordID] = record
+		return record
+	}
+
+}
+
 }
