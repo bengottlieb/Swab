@@ -14,24 +14,24 @@ public let kABPersonImageProperty: ABPropertyID = 50411
 public class SwabRecord: NSObject {
 	static  var allProperties = Set([kABPersonFirstNameProperty, kABPersonMiddleNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty, kABPersonJobTitleProperty, kABPersonDepartmentProperty, kABPersonNoteProperty, kABPersonBirthdayProperty, kABPersonPhoneProperty, kABPersonEmailProperty, kABPersonURLProperty, kABPersonInstantMessageProperty, kABPersonSocialProfileProperty, kABPersonAddressProperty, kABPersonImageProperty])
 	
-	var ref: ABRecord?
+	public var ref: ABRecord?
 	
-	var firstName = "" { didSet { self.fieldChanged(kABPersonFirstNameProperty) } }
-	var middleName = "" { didSet { self.fieldChanged(kABPersonMiddleNameProperty) } }
-	var lastName = "" { didSet { self.fieldChanged(kABPersonLastNameProperty) } }
-	var companyName = "" { didSet { self.fieldChanged(kABPersonOrganizationProperty) } }
-	var title = "" { didSet { self.fieldChanged(kABPersonJobTitleProperty) } }
-	var department = "" { didSet { self.fieldChanged(kABPersonDepartmentProperty) } }
-	var notes = "" { didSet { self.fieldChanged(kABPersonNoteProperty) } }
-	var birthday: NSDate? { didSet { self.fieldChanged(kABPersonBirthdayProperty) } }
-	var image: UIImage? { didSet { self.fieldChanged(kABPersonImageProperty) } }
+	public var firstName = "" { didSet { self.fieldChanged(kABPersonFirstNameProperty) } }
+	public var middleName = "" { didSet { self.fieldChanged(kABPersonMiddleNameProperty) } }
+	public var lastName = "" { didSet { self.fieldChanged(kABPersonLastNameProperty) } }
+	public var companyName = "" { didSet { self.fieldChanged(kABPersonOrganizationProperty) } }
+	public var title = "" { didSet { self.fieldChanged(kABPersonJobTitleProperty) } }
+	public var department = "" { didSet { self.fieldChanged(kABPersonDepartmentProperty) } }
+	public var notes = "" { didSet { self.fieldChanged(kABPersonNoteProperty) } }
+	public var birthday: NSDate? { didSet { self.fieldChanged(kABPersonBirthdayProperty) } }
+	public var image: UIImage? { didSet { self.fieldChanged(kABPersonImageProperty) } }
 	
-	var phoneNumbers: [SwabRecordPhoneNumber] = []
-	var emailAddresses: [SwabRecordEmailAddress] = []
-	var URLs: [SwabRecordURL] = []
-	var IMServices: [SwabRecordIMService] = []
-	var socialNetworks: [SwabRecordSocialNetwork] = []
-	var streetAddresses: [SwabRecordStreetAddress] = []
+	public var phoneNumbers: [SwabRecordPhoneNumber] = []
+	public var emailAddresses: [SwabRecordEmailAddress] = []
+	public var URLs: [SwabRecordURL] = []
+	public var IMServices: [SwabRecordIMService] = []
+	public var socialNetworks: [SwabRecordSocialNetwork] = []
+	public var streetAddresses: [SwabRecordStreetAddress] = []
 	
 	//=============================================================================================
 	//MARK: Loading
@@ -43,7 +43,7 @@ public class SwabRecord: NSObject {
 		for field in fieldsToLoad { self.loadField(field) }
 		
 		self.loadedFields.unionInPlace(fieldsToLoad)
-		self.isLoading = true
+		self.isLoading = false
 	}
 	
 	var loadedFields = Set<ABPropertyID>()
@@ -73,8 +73,20 @@ public class SwabRecord: NSObject {
 		}
 	}
 	
+	public func save() {
+		for field in self.changedFields {
+			self.writeField(field)
+		}
+	}
+	
 	func writeField(field: ABPropertyID) {
 		switch (field) {
+		case kABPersonImageProperty:
+			if let image = self.image {
+				var error: Unmanaged<CFError>?
+				ABPersonSetImageData(self.ref, UIImageJPEGRepresentation(image, 1.0), &error)
+			}
+			
 		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
 		case kABPersonMiddleNameProperty: self.writeString(self.middleName, toProperty: field)
 		case kABPersonLastNameProperty: self.writeString(self.lastName, toProperty: field)
@@ -84,17 +96,21 @@ public class SwabRecord: NSObject {
 		case kABPersonDepartmentProperty: self.writeString(self.department, toProperty: field)
 		case kABPersonBirthdayProperty: self.writeDate(self.birthday, toProperty: field)
 		
-//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
-//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
-//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
-//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
+		case kABPersonPhoneProperty: self.phoneNumbers.map { $0.writeToRecord() }
+		case kABPersonEmailProperty: self.emailAddresses.map { $0.writeToRecord() }
+		case kABPersonURLProperty: self.URLs.map { $0.writeToRecord() }
+		case kABPersonInstantMessageProperty: self.IMServices.map { $0.writeToRecord() }
+		case kABPersonSocialProfileProperty: self.socialNetworks.map { $0.writeToRecord() }
+		case kABPersonAddressProperty: self.streetAddresses.map { $0.writeToRecord() }
 		default: break
 		}
 	}
 	
 	func writeString(string: String, toProperty prop: ABPropertyID) {
 		var error: Unmanaged<CFError>?
-		ABRecordSetValue(self.ref, prop, string, &error)
+		if !ABRecordSetValue(self.ref, prop, string, &error) {
+			println("Problem saving \(string) to \(prop): \(error)")
+		}
 	}
 	
 	func writeDate(date: NSDate?, toProperty prop: ABPropertyID) {
@@ -120,6 +136,14 @@ public class SwabRecord: NSObject {
 	public override var description: String {
 		self.load()
 		
-		return "\(self.firstName) \(self.lastName), (\(self.companyName)) "
+		var string = "\(self.firstName) \(self.lastName), (\(self.companyName))\n"
+		
+		for phone in self.phoneNumbers { string += "  " + phone.description + "\n" }
+		for email in self.emailAddresses { string += "  " + email.description + "\n"  }
+		for url in self.URLs { string += "  " + url.description + "\n"  }
+		for im in self.IMServices { string += "  " + im.description + "\n"  }
+		for social in self.socialNetworks { string += "  " + social.description + "\n"  }
+		for address in self.streetAddresses { string += "  " + address.description + "\n"  }
+		return string
 	}
 }

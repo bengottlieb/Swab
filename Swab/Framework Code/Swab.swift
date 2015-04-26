@@ -51,13 +51,14 @@ public class Swab: NSObject {
 		self.authorize { success in completion(self.addressBook) }
 	}
 	
-	public func save(completion: () -> Void) {
-		self.queue.addOperationWithBlock({
-			if ABAddressBookHasUnsavedChanges(self.addressBook) {
+	public func save(completion: (() -> Void)? = nil) {
+		self.fetchAddressBook { book in
+			if ABAddressBookHasUnsavedChanges(book) {
 				var error: Unmanaged<CFError>?
-				if !ABAddressBookSave(self.addressBook, &error) { println("Failed to save address book: \(error)") }
+				if !ABAddressBookSave(book, &error) { println("Failed to save address book: \(error)") }
 			}
-		})
+			completion?()
+		}
 	}
 	
 	public func findAllPeopleWith(firstName: String? = nil, lastName: String? = nil, company: String? = nil, fields: Set<ABPropertyID>? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
@@ -129,7 +130,11 @@ extension Swab: ABPeoplePickerNavigationControllerDelegate {
 	}
 
 	public func peoplePickerNavigationController(peoplePicker: ABPeoplePickerNavigationController!, didSelectPerson person: ABRecord!) {
-		self.selectContactCompletion?(self.recordWithABRecord(person))
+		var recordID = ABRecordGetRecordID(person)
+		
+		self.findRecordWithID(recordID) { record in
+			self.selectContactCompletion?(record)
+		}
 	}
 	
 	public func peoplePickerNavigationControllerDidCancel(peoplePicker: ABPeoplePickerNavigationController!) {
