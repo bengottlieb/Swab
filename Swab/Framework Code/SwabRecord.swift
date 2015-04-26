@@ -16,10 +16,15 @@ public class SwabRecord: NSObject {
 	
 	var ref: ABRecord?
 	
-	var firstName = "", middleName = "", lastName = ""
-	var companyName = "", title = "", department = "", notes = ""
-	var birthday: NSDate?
-	var image: UIImage?
+	var firstName = "" { didSet { self.fieldChanged(kABPersonFirstNameProperty) } }
+	var middleName = "" { didSet { self.fieldChanged(kABPersonMiddleNameProperty) } }
+	var lastName = "" { didSet { self.fieldChanged(kABPersonLastNameProperty) } }
+	var companyName = "" { didSet { self.fieldChanged(kABPersonOrganizationProperty) } }
+	var title = "" { didSet { self.fieldChanged(kABPersonJobTitleProperty) } }
+	var department = "" { didSet { self.fieldChanged(kABPersonDepartmentProperty) } }
+	var notes = "" { didSet { self.fieldChanged(kABPersonNoteProperty) } }
+	var birthday: NSDate? { didSet { self.fieldChanged(kABPersonBirthdayProperty) } }
+	var image: UIImage? { didSet { self.fieldChanged(kABPersonImageProperty) } }
 	
 	var phoneNumbers: [SwabRecordPhoneNumber] = []
 	var emailAddresses: [SwabRecordEmailAddress] = []
@@ -28,21 +33,21 @@ public class SwabRecord: NSObject {
 	var socialNetworks: [SwabRecordSocialNetwork] = []
 	var streetAddresses: [SwabRecordStreetAddress] = []
 	
-	var isLoaded = false
-	
 	//=============================================================================================
 	//MARK: Loading
 	func load(fields: Set<ABPropertyID> = SwabRecord.allProperties) {
 		var fieldsToLoad = fields.subtract(self.loadedFields)
 		if fieldsToLoad.count == 0 || self.ref == nil { return }
 		
+		self.isLoading = true
 		for field in fieldsToLoad { self.loadField(field) }
 		
 		self.loadedFields.unionInPlace(fieldsToLoad)
-		self.isLoaded = true
+		self.isLoading = true
 	}
 	
 	var loadedFields = Set<ABPropertyID>()
+	var isLoading = false
 	
 	func loadField(field: ABPropertyID) {
 		switch (field) {
@@ -58,14 +63,43 @@ public class SwabRecord: NSObject {
 			
 		case kABPersonBirthdayProperty: self.birthday = self.copyDateProperty(kABPersonBirthdayProperty)
 			
-		case kABPersonPhoneProperty: self.phoneNumbers = SwabRecordPhoneNumber.loadMultiplesFrom(self.ref!) as? [SwabRecordPhoneNumber] ?? []
-		case kABPersonEmailProperty: self.emailAddresses = SwabRecordEmailAddress.loadMultiplesFrom(self.ref!) as? [SwabRecordEmailAddress] ?? []
-		case kABPersonURLProperty: self.URLs = SwabRecordURL.loadMultiplesFrom(self.ref!) as? [SwabRecordURL] ?? []
-		case kABPersonInstantMessageProperty: self.IMServices = SwabRecordIMService.loadMultiplesFrom(self.ref!) as? [SwabRecordIMService] ?? []
-		case kABPersonSocialProfileProperty: self.socialNetworks = SwabRecordSocialNetwork.loadMultiplesFrom(self.ref!) as? [SwabRecordSocialNetwork] ?? []
-		case kABPersonAddressProperty: self.streetAddresses = SwabRecordStreetAddress.loadMultiplesFrom(self.ref!) as? [SwabRecordStreetAddress] ?? []
+		case kABPersonPhoneProperty: self.phoneNumbers = SwabRecordPhoneNumber.loadMultiplesFrom(self) as? [SwabRecordPhoneNumber] ?? []
+		case kABPersonEmailProperty: self.emailAddresses = SwabRecordEmailAddress.loadMultiplesFrom(self) as? [SwabRecordEmailAddress] ?? []
+		case kABPersonURLProperty: self.URLs = SwabRecordURL.loadMultiplesFrom(self) as? [SwabRecordURL] ?? []
+		case kABPersonInstantMessageProperty: self.IMServices = SwabRecordIMService.loadMultiplesFrom(self) as? [SwabRecordIMService] ?? []
+		case kABPersonSocialProfileProperty: self.socialNetworks = SwabRecordSocialNetwork.loadMultiplesFrom(self) as? [SwabRecordSocialNetwork] ?? []
+		case kABPersonAddressProperty: self.streetAddresses = SwabRecordStreetAddress.loadMultiplesFrom(self) as? [SwabRecordStreetAddress] ?? []
 		default: break
 		}
+	}
+	
+	func writeField(field: ABPropertyID) {
+		switch (field) {
+		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
+		case kABPersonMiddleNameProperty: self.writeString(self.middleName, toProperty: field)
+		case kABPersonLastNameProperty: self.writeString(self.lastName, toProperty: field)
+		case kABPersonOrganizationProperty: self.writeString(self.companyName, toProperty: field)
+		case kABPersonJobTitleProperty: self.writeString(self.title, toProperty: field)
+		case kABPersonNoteProperty: self.writeString(self.notes, toProperty: field)
+		case kABPersonDepartmentProperty: self.writeString(self.department, toProperty: field)
+		case kABPersonBirthdayProperty: self.writeDate(self.birthday, toProperty: field)
+		
+//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
+//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
+//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
+//		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
+		default: break
+		}
+	}
+	
+	func writeString(string: String, toProperty prop: ABPropertyID) {
+		var error: Unmanaged<CFError>?
+		ABRecordSetValue(self.ref, prop, string, &error)
+	}
+	
+	func writeDate(date: NSDate?, toProperty prop: ABPropertyID) {
+		var error: Unmanaged<CFError>?
+		ABRecordSetValue(self.ref, prop, date, &error)
 	}
 	
 	func copyStringProperty(property: ABPropertyID) -> String? {
@@ -76,7 +110,12 @@ public class SwabRecord: NSObject {
 		return ABRecordCopyValue(self.ref, property)?.takeRetainedValue() as? NSDate
 	}
 	
-	
+	func fieldChanged(field: ABPropertyID) {
+		if !self.isLoading {
+			changedFields.insert(field)
+		}
+	}
+	var changedFields = Set<ABPropertyID>()
 	
 	public override var description: String {
 		self.load()

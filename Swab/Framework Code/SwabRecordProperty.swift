@@ -12,22 +12,24 @@ import AddressBook
 public class SwabRecordProperty: NSObject {
 	var label: String = ""
 	var prettyLabel: String = ""
+	var record: SwabRecord?
 	class var propertyID: ABPropertyID { return kABPersonPhoneProperty }
 	init(label labelString: String) {
 		super.init()
 		self.label = labelString
 	}
 	
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		record = inRecord
 	}
 	
-	class func loadMultiplesFrom(record: ABRecord) -> [SwabRecordProperty] {
+	class func loadMultiplesFrom(record: SwabRecord) -> [SwabRecordProperty] {
 		var results: [SwabRecordProperty] = []
-		if let properties: ABMultiValueRef = ABRecordCopyValue(record, self.propertyID)?.takeRetainedValue() {
+		if let properties: ABMultiValueRef = ABRecordCopyValue(record.ref, self.propertyID)?.takeRetainedValue() {
 			var count = ABMultiValueGetCount(properties)
 			
 			for i in 0..<count {
-				results.append(self(index: i, ofProperty: properties))
+				results.append(self(index: i, ofProperty: properties, inRecord: record))
 			}
 		}
 		
@@ -37,6 +39,11 @@ public class SwabRecordProperty: NSObject {
 	func copyMultiLabel(index: Int, ofProperty: ABMultiValueRef) -> String? { return ABMultiValueCopyLabelAtIndex(ofProperty, index)?.takeRetainedValue() as? String }
 	func copyMultiValue(index: Int, ofProperty: ABMultiValueRef) -> String? { return ABMultiValueCopyValueAtIndex(ofProperty, index)?.takeRetainedValue() as? String }
 	func copyMultiDictionary(index: Int, ofProperty: ABMultiValueRef) -> [NSObject: AnyObject]? { return ABMultiValueCopyValueAtIndex(ofProperty, index)?.takeRetainedValue() as? [NSObject: AnyObject] }
+	
+	func wasModified() {
+		var type = self.dynamicType.propertyID
+		self.record?.fieldChanged(type)
+	}
 }
 
 public class SwabRecordPhoneNumber: SwabRecordProperty {
@@ -46,8 +53,8 @@ public class SwabRecordPhoneNumber: SwabRecordProperty {
 		super.init(label: label)
 		self.number = phone
 	}
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
-		super.init(index: index, ofProperty: ofProperty)
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		super.init(index: index, ofProperty: ofProperty, inRecord: inRecord)
 		
 		self.label = self.copyMultiLabel(index, ofProperty: ofProperty) ?? ""
 		self.number = self.copyMultiValue(index, ofProperty: ofProperty) ?? ""
@@ -61,8 +68,8 @@ public class SwabRecordEmailAddress: SwabRecordProperty {
 		super.init(label: label)
 		self.email = address
 	}
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
-		super.init(index: index, ofProperty: ofProperty)
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		super.init(index: index, ofProperty: ofProperty, inRecord: inRecord)
 		
 		self.label = self.copyMultiLabel(index, ofProperty: ofProperty) ?? ""
 		self.email = self.copyMultiValue(index, ofProperty: ofProperty) ?? ""
@@ -76,8 +83,8 @@ public class SwabRecordURL: SwabRecordProperty {
 		super.init(label: label)
 		self.url = address
 	}
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
-		super.init(index: index, ofProperty: ofProperty)
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		super.init(index: index, ofProperty: ofProperty, inRecord: inRecord)
 		
 		self.label = self.copyMultiLabel(index, ofProperty: ofProperty) ?? ""
 		self.url = self.copyMultiValue(index, ofProperty: ofProperty) ?? ""
@@ -93,8 +100,8 @@ public class SwabRecordIMService: SwabRecordProperty {
 		self.username = user ?? ""
 		self.service = serviceName ?? ""
 	}
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
-		super.init(index: index, ofProperty: ofProperty)
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		super.init(index: index, ofProperty: ofProperty, inRecord: inRecord)
 		
 		self.label = self.copyMultiLabel(index, ofProperty: ofProperty) ?? ""
 		if let dict = self.copyMultiDictionary(index, ofProperty: ofProperty) {
@@ -107,8 +114,8 @@ public class SwabRecordIMService: SwabRecordProperty {
 public class SwabRecordSocialNetwork: SwabRecordIMService {
 	override class var propertyID: ABPropertyID { return kABPersonSocialProfileProperty }
 	
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
-		super.init(index: index, ofProperty: ofProperty)
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		super.init(index: index, ofProperty: ofProperty, inRecord: inRecord)
 	}
 }
 
@@ -130,8 +137,8 @@ public class SwabRecordStreetAddress: SwabRecordProperty {
 		country = coString ?? ""
 	}
 	
-	public required init(index: Int, ofProperty: ABMultiValueRef) {
-		super.init(index: index, ofProperty: ofProperty)
+	public required init(index: Int, ofProperty: ABMultiValueRef, inRecord: SwabRecord) {
+		super.init(index: index, ofProperty: ofProperty, inRecord: inRecord)
 		self.label = self.copyMultiLabel(index, ofProperty: ofProperty) ?? ""
 		
 		if let dict = self.copyMultiDictionary(index, ofProperty: ofProperty) {
