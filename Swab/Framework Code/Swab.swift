@@ -99,6 +99,7 @@ public class Swab: NSObject {
 	var pendingAuthorizations: [(Bool) -> Void] = []
 	let queue: NSOperationQueue = { var queue = NSOperationQueue(); queue.maxConcurrentOperationCount = 1; return queue }()
 	internal var addressBook: ABAddressBook!
+	internal var selectContactCompletion: ((SwabRecord?) -> Void)?
 	internal var recordCache: [ABRecordID: SwabRecord] = [:]
 	
 	internal func recordWithABRecordID(id: ABRecordID) -> SwabRecord? {
@@ -117,5 +118,23 @@ public class Swab: NSObject {
 	}
 
 }
+
+extension Swab: ABPeoplePickerNavigationControllerDelegate {
+	public func selectContactInViewController(parent: UIViewController, animated: Bool = true, completion: (SwabRecord?) -> Void) {
+		var controller = ABPeoplePickerNavigationController()
+		
+		controller.peoplePickerDelegate = self
+		self.selectContactCompletion = completion
+		parent.presentViewController(controller, animated: true, completion: nil)
+	}
+
+	public func peoplePickerNavigationController(peoplePicker: ABPeoplePickerNavigationController!, didSelectPerson person: ABRecord!) {
+		self.selectContactCompletion?(self.recordWithABRecord(person))
+	}
+	
+	public func peoplePickerNavigationControllerDidCancel(peoplePicker: ABPeoplePickerNavigationController!) {
+		self.selectContactCompletion?(nil)
+	}
+
 
 }
