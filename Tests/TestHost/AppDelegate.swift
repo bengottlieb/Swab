@@ -18,9 +18,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 	func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
 		// Override point for customization after application launch
 		
-		Swab.instance.findAllPeopleWith(lastName: "Acme") { records in
-			println("found: \(records)")
-		}
+//		Swab.instance.findAllPeopleWith(lastName: "Acme") { records in
+//			println("found: \(records)")
+//		}
 		
 		
 		return true

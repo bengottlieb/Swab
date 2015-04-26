@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Swab
 
 class ViewController: UIViewController {
 
@@ -20,6 +21,10 @@ class ViewController: UIViewController {
 		// Dispose of any resources that can be recreated.
 	}
 
-
+	override func viewDidAppear(animated: Bool) {
+		Swab.instance.selectContactInViewController(self, animated: true) { record in
+			println("result: \(record)")
+		}
+	}
 }
 

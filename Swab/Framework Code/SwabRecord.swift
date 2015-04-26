@@ -33,29 +33,39 @@ public class SwabRecord: NSObject {
 	//=============================================================================================
 	//MARK: Loading
 	func load(fields: Set<ABPropertyID> = SwabRecord.allProperties) {
-		if self.isLoaded || self.ref == nil { return }
+		var fieldsToLoad = fields.subtract(self.loadedFields)
+		if fieldsToLoad.count == 0 || self.ref == nil { return }
 		
-		var all = fields == SwabRecord.allProperties
-		if all || contains(fields, kABPersonImageProperty) { if let imageData = ABPersonCopyImageDataWithFormat(self.ref, kABPersonImageFormatOriginalSize)?.takeRetainedValue() as? NSData { self.image = UIImage(data: imageData) } }
+		for field in fieldsToLoad { self.loadField(field) }
 		
-		if all || contains(fields, kABPersonFirstNameProperty) { self.firstName = self.copyStringProperty(kABPersonFirstNameProperty) ?? "" }
-		if all || contains(fields, kABPersonLastNameProperty) { self.lastName = self.copyStringProperty(kABPersonLastNameProperty) ?? "" }
-		if all || contains(fields, kABPersonMiddleNameProperty) { self.middleName = self.copyStringProperty(kABPersonMiddleNameProperty) ?? "" }
-		if all || contains(fields, kABPersonOrganizationProperty) { self.companyName = self.copyStringProperty(kABPersonOrganizationProperty) ?? "" }
-		if all || contains(fields, kABPersonJobTitleProperty) { self.title = self.copyStringProperty(kABPersonJobTitleProperty) ?? "" }
-		if all || contains(fields, kABPersonDepartmentProperty) { self.department = self.copyStringProperty(kABPersonDepartmentProperty) ?? "" }
-		if all || contains(fields, kABPersonNoteProperty) { self.notes = self.copyStringProperty(kABPersonNoteProperty) ?? "" }
-		
-		if all || contains(fields, kABPersonBirthdayProperty) { self.birthday = self.copyDateProperty(kABPersonBirthdayProperty) }
-		
-		if all || contains(fields, kABPersonPhoneProperty) { self.phoneNumbers = SwabRecordPhoneNumber.loadMultiplesFrom(self.ref!) as? [SwabRecordPhoneNumber] ?? [] }
-		if all || contains(fields, kABPersonEmailProperty) { self.emailAddresses = SwabRecordEmailAddress.loadMultiplesFrom(self.ref!) as? [SwabRecordEmailAddress] ?? [] }
-		if all || contains(fields, kABPersonURLProperty) { self.URLs = SwabRecordURL.loadMultiplesFrom(self.ref!) as? [SwabRecordURL] ?? [] }
-		if all || contains(fields, kABPersonInstantMessageProperty) { self.IMServices = SwabRecordIMService.loadMultiplesFrom(self.ref!) as? [SwabRecordIMService] ?? [] }
-		if all || contains(fields, kABPersonSocialProfileProperty) { self.socialNetworks = SwabRecordSocialNetwork.loadMultiplesFrom(self.ref!) as? [SwabRecordSocialNetwork] ?? [] }
-		if all || contains(fields, kABPersonAddressProperty) { self.streetAddresses = SwabRecordStreetAddress.loadMultiplesFrom(self.ref!) as? [SwabRecordStreetAddress] ?? [] }
-		
+		self.loadedFields.unionInPlace(fieldsToLoad)
 		self.isLoaded = true
+	}
+	
+	var loadedFields = Set<ABPropertyID>()
+	
+	func loadField(field: ABPropertyID) {
+		switch (field) {
+		case kABPersonImageProperty: if let imageData = ABPersonCopyImageDataWithFormat(self.ref, kABPersonImageFormatOriginalSize)?.takeRetainedValue() as? NSData { self.image = UIImage(data: imageData) }
+			
+		case kABPersonFirstNameProperty: self.firstName = self.copyStringProperty(kABPersonFirstNameProperty) ?? ""
+		case kABPersonLastNameProperty: self.lastName = self.copyStringProperty(kABPersonLastNameProperty) ?? ""
+		case kABPersonMiddleNameProperty: self.middleName = self.copyStringProperty(kABPersonMiddleNameProperty) ?? ""
+		case kABPersonOrganizationProperty: self.companyName = self.copyStringProperty(kABPersonOrganizationProperty) ?? ""
+		case kABPersonJobTitleProperty: self.title = self.copyStringProperty(kABPersonJobTitleProperty) ?? ""
+		case kABPersonDepartmentProperty: self.department = self.copyStringProperty(kABPersonDepartmentProperty) ?? ""
+		case kABPersonNoteProperty: self.notes = self.copyStringProperty(kABPersonNoteProperty) ?? ""
+			
+		case kABPersonBirthdayProperty: self.birthday = self.copyDateProperty(kABPersonBirthdayProperty)
+			
+		case kABPersonPhoneProperty: self.phoneNumbers = SwabRecordPhoneNumber.loadMultiplesFrom(self.ref!) as? [SwabRecordPhoneNumber] ?? []
+		case kABPersonEmailProperty: self.emailAddresses = SwabRecordEmailAddress.loadMultiplesFrom(self.ref!) as? [SwabRecordEmailAddress] ?? []
+		case kABPersonURLProperty: self.URLs = SwabRecordURL.loadMultiplesFrom(self.ref!) as? [SwabRecordURL] ?? []
+		case kABPersonInstantMessageProperty: self.IMServices = SwabRecordIMService.loadMultiplesFrom(self.ref!) as? [SwabRecordIMService] ?? []
+		case kABPersonSocialProfileProperty: self.socialNetworks = SwabRecordSocialNetwork.loadMultiplesFrom(self.ref!) as? [SwabRecordSocialNetwork] ?? []
+		case kABPersonAddressProperty: self.streetAddresses = SwabRecordStreetAddress.loadMultiplesFrom(self.ref!) as? [SwabRecordStreetAddress] ?? []
+		default: break
+		}
 	}
 	
 	func copyStringProperty(property: ABPropertyID) -> String? {
