@@ -48,6 +48,14 @@ public class SwabRecord: NSObject {
 		return self.companyName
 	}
 	
+	public func isDuplicateOf(other: SwabRecord) -> Bool {
+		self.load()
+		other.load()
+		
+		if self.displayName != other.displayName { return false }
+		
+		return true
+	}
 	//=============================================================================================
 	//MARK: Loading
 	func load(fields: Set<ABPropertyID> = SwabRecord.allProperties) {

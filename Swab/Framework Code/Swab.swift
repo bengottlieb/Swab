@@ -46,9 +46,11 @@ public class Swab: NSObject {
 	}
 	
 	public func fetchAddressBook(completion: (ABAddressBook?) -> Void) {
-		if self.isAuthorized { completion(self.addressBook); return }
-		
-		self.authorize { success in completion(self.addressBook) }
+		if self.isAuthorized {
+			self.queueBlock {  completion(self.addressBook) }
+		} else {
+			self.authorize { success in completion(self.addressBook) }
+		}
 	}
 	
 	public func save(completion: (() -> Void)? = nil) {
@@ -96,15 +98,19 @@ public class Swab: NSObject {
 	public func importVCardData(data: NSData, filterDuplicates: Bool = true, completion: (([SwabRecord]) -> Void)? = nil) {
 		self.fetchAddressBook { book in
 			var created: [SwabRecord] = []
-			var source: ABRecord = ABAddressBookCopyDefaultSource(book).takeRetainedValue()
+			var source: ABRecord = ABAddressBookCopyDefaultSource(book).takeUnretainedValue()
 			
 			if let newRecords = ABPersonCreatePeopleInSourceWithVCardRepresentation(source, data).takeRetainedValue() as? [ABRecord] {
 				for card in newRecords {
 					var record = self.recordWithABRecord(card)
 					
+					if filterDuplicates {
+						var matching = self.findRecordsMatching(record)
+						if matching.count > 0 { continue }
+					}
+					
+					ABAddressBookAddRecord(book, card, nil)
 					created.append(record)
-					record.firstName = "Fresh!"
-					record.save()
 				}
 				self.save()
 			}
@@ -137,7 +143,27 @@ public class Swab: NSObject {
 		record.recordID = recordID
 		return record
 	}
-
+	
+	internal func findRecordsMatching(card: SwabRecord) -> [SwabRecord] {
+		var records: [SwabRecord] = []
+		
+		card.load()
+		self.findAllPeopleWith(firstName: card.firstName, lastName: card.lastName, company: card.companyName) { found in
+			for record in found {
+				if record.isDuplicateOf(card) { records.append(record) }
+			}
+		}
+		
+		return records
+	}
+	
+	internal func queueBlock(block: () -> Void) {
+		if NSOperationQueue.currentQueue() == self.queue {
+			block();
+		} else {
+			self.queue.addOperationWithBlock(block)
+		}
+	}
 }
 
 extension Swab: ABPeoplePickerNavigationControllerDelegate {
