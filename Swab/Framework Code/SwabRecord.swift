@@ -16,6 +16,7 @@ public class SwabRecord: NSObject {
 	
 	public var ref: ABRecord?
 	
+	public var recordID: ABRecordID?
 	public var firstName = "" { didSet { self.fieldChanged(kABPersonFirstNameProperty) } }
 	public var middleName = "" { didSet { self.fieldChanged(kABPersonMiddleNameProperty) } }
 	public var lastName = "" { didSet { self.fieldChanged(kABPersonLastNameProperty) } }
@@ -32,6 +33,20 @@ public class SwabRecord: NSObject {
 	public var IMServices: [SwabRecordIMService] = []
 	public var socialNetworks: [SwabRecordSocialNetwork] = []
 	public var streetAddresses: [SwabRecordStreetAddress] = []
+	
+	public var vcardData: NSData? {
+		if let record: ABRecord = self.ref { return ABPersonCreateVCardRepresentationWithPeople([record]).takeRetainedValue() }
+		return nil
+	}
+	
+	public var displayName: String {
+		self.load(fields: Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
+			
+		var string = "\(self.firstName) \(self.lastName)"
+		if count(string) > 1 { return string }
+		
+		return self.companyName
+	}
 	
 	//=============================================================================================
 	//MARK: Loading

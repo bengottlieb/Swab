@@ -115,6 +115,7 @@ public class Swab: NSObject {
 		let record = SwabRecord()
 		record.ref = rec
 		self.recordCache[recordID] = record
+		record.recordID = recordID
 		return record
 	}
 
