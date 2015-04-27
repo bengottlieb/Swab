@@ -93,6 +93,25 @@ public class Swab: NSObject {
 		self.fetchAddressBook { book in ABAddressBookRevert(book) }
 	}
 	
+	public func importVCardData(data: NSData, filterDuplicates: Bool = true, completion: (([SwabRecord]) -> Void)? = nil) {
+		self.fetchAddressBook { book in
+			var created: [SwabRecord] = []
+			var source: ABRecord = ABAddressBookCopyDefaultSource(book).takeRetainedValue()
+			
+			if let newRecords = ABPersonCreatePeopleInSourceWithVCardRepresentation(source, data).takeRetainedValue() as? [ABRecord] {
+				for card in newRecords {
+					var record = self.recordWithABRecord(card)
+					
+					created.append(record)
+					record.firstName = "Fresh!"
+					record.save()
+				}
+				self.save()
+			}
+			completion?(created)
+		}
+	}
+	
 	//=============================================================================================
 	//MARK: Private stuff
 	

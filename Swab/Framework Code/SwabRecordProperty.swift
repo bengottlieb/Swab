@@ -48,7 +48,7 @@ public class SwabRecordProperty: NSObject {
 		self.record?.fieldChanged(type)
 	}
 	
-	func writeToRecord() {
+	func writeToRecord() -> NSError? {
 		var mutable: ABMutableMultiValue!
 		if let properties: ABMultiValueRef = ABRecordCopyValue(self.record!.ref, self.dynamicType.propertyID)?.takeRetainedValue() {
 			mutable = ABMultiValueCreateMutableCopy(properties).takeRetainedValue()
@@ -67,6 +67,7 @@ public class SwabRecordProperty: NSObject {
 		if !ABRecordSetValue(self.record!.ref, self.dynamicType.propertyID, mutable, &error) {
 			println("Error saving \(self): \(error)")
 		}
+		return nil
 	}
 	
 	var value: NSObject? { return nil }

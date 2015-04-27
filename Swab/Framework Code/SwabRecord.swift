@@ -88,13 +88,18 @@ public class SwabRecord: NSObject {
 		}
 	}
 	
-	public func save() {
+	public func save() -> NSError? {
 		for field in self.changedFields {
-			self.writeField(field)
+			if let error = self.writeField(field) {
+				return error
+			}
 		}
+		return nil
 	}
 	
-	func writeField(field: ABPropertyID) {
+	func writeField(field: ABPropertyID) -> NSError? {
+		var errors: [NSError?] = []
+		
 		switch (field) {
 		case kABPersonImageProperty:
 			if let image = self.image {
@@ -102,35 +107,40 @@ public class SwabRecord: NSObject {
 				ABPersonSetImageData(self.ref, UIImageJPEGRepresentation(image, 1.0), &error)
 			}
 			
-		case kABPersonFirstNameProperty: self.writeString(self.firstName, toProperty: field)
-		case kABPersonMiddleNameProperty: self.writeString(self.middleName, toProperty: field)
-		case kABPersonLastNameProperty: self.writeString(self.lastName, toProperty: field)
-		case kABPersonOrganizationProperty: self.writeString(self.companyName, toProperty: field)
-		case kABPersonJobTitleProperty: self.writeString(self.title, toProperty: field)
-		case kABPersonNoteProperty: self.writeString(self.notes, toProperty: field)
-		case kABPersonDepartmentProperty: self.writeString(self.department, toProperty: field)
-		case kABPersonBirthdayProperty: self.writeDate(self.birthday, toProperty: field)
+		case kABPersonFirstNameProperty: return self.writeString(self.firstName, toProperty: field)
+		case kABPersonMiddleNameProperty: return self.writeString(self.middleName, toProperty: field)
+		case kABPersonLastNameProperty: return self.writeString(self.lastName, toProperty: field)
+		case kABPersonOrganizationProperty: return self.writeString(self.companyName, toProperty: field)
+		case kABPersonJobTitleProperty: return self.writeString(self.title, toProperty: field)
+		case kABPersonNoteProperty: return self.writeString(self.notes, toProperty: field)
+		case kABPersonDepartmentProperty: return self.writeString(self.department, toProperty: field)
+		case kABPersonBirthdayProperty: return self.writeDate(self.birthday, toProperty: field)
 		
-		case kABPersonPhoneProperty: self.phoneNumbers.map { $0.writeToRecord() }
-		case kABPersonEmailProperty: self.emailAddresses.map { $0.writeToRecord() }
-		case kABPersonURLProperty: self.URLs.map { $0.writeToRecord() }
-		case kABPersonInstantMessageProperty: self.IMServices.map { $0.writeToRecord() }
-		case kABPersonSocialProfileProperty: self.socialNetworks.map { $0.writeToRecord() }
-		case kABPersonAddressProperty: self.streetAddresses.map { $0.writeToRecord() }
+		case kABPersonPhoneProperty: errors = self.phoneNumbers.map { $0.writeToRecord() }
+		case kABPersonEmailProperty: errors = self.emailAddresses.map { $0.writeToRecord() }
+		case kABPersonURLProperty: errors = self.URLs.map { $0.writeToRecord() }
+		case kABPersonInstantMessageProperty: errors = self.IMServices.map { $0.writeToRecord() }
+		case kABPersonSocialProfileProperty: errors = self.socialNetworks.map { $0.writeToRecord() }
+		case kABPersonAddressProperty: errors = self.streetAddresses.map { $0.writeToRecord() }
 		default: break
 		}
+		
+		if errors.count > 0 { return errors[0] }
+		return nil
 	}
 	
-	func writeString(string: String, toProperty prop: ABPropertyID) {
+	func writeString(string: String, toProperty prop: ABPropertyID) -> NSError? {
 		var error: Unmanaged<CFError>?
 		if !ABRecordSetValue(self.ref, prop, string, &error) {
 			println("Problem saving \(string) to \(prop): \(error)")
 		}
+		return nil
 	}
 	
-	func writeDate(date: NSDate?, toProperty prop: ABPropertyID) {
+	func writeDate(date: NSDate?, toProperty prop: ABPropertyID) -> NSError? {
 		var error: Unmanaged<CFError>?
 		ABRecordSetValue(self.ref, prop, date, &error)
+		return nil
 	}
 	
 	func copyStringProperty(property: ABPropertyID) -> String? {

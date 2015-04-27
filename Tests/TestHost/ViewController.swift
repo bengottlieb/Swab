@@ -24,15 +24,19 @@ class ViewController: UIViewController {
 	override func viewDidAppear(animated: Bool) {
 		
 		Swab.instance.selectContactInViewController(self, animated: true) { record in
-			println("result: \(record)")
+			if let data = record?.vcardData {
+				Swab.instance.importVCardData(data)
+			}
 			
-			record?.firstName = "James"
-			record?.lastName = "Frederick"
-			
-			record?.phoneNumbers[0].number = "123-123-1234"
-			record?.save()
-			
-			Swab.instance.save()
+//			println("result: \(record)")
+//			
+//			record?.firstName = "James"
+//			record?.lastName = "Frederick"
+//			
+//			record?.phoneNumbers[0].number = "123-123-1234"
+//			record?.save()
+//			
+//			Swab.instance.save()
 			
 		}
 	}
