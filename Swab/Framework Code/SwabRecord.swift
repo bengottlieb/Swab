@@ -75,13 +75,20 @@ public class SwabRecord: NSObject {
 	}
 	
 	public func sortFieldForOrdering(order: ABPersonSortOrdering) -> String {
+		var checkOrder = [""]
+		
 		switch Int(order) {
-		case kABPersonSortByFirstName: return self.firstName.isEmpty ? self.lastName : self.firstName
-		case kABPersonSortByLastName: return self.lastName.isEmpty ? self.firstName : self.lastName
+		case kABPersonSortByFirstName: checkOrder = [self.firstName, self.lastName, self.companyName]
+		case kABPersonSortByLastName: checkOrder = [self.lastName, self.firstName, self.companyName]
 		default:
 			assert(false, "illegal sort order: \(order)")
 			return ""
 		}
+		
+		for prop in checkOrder {
+			if !prop.isEmpty { return prop }
+		}
+		return ""
 	}
 	
 	//=============================================================================================
