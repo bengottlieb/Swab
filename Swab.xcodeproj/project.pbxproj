@@ -25,6 +25,7 @@
 		B504E69D1A896E82001B414B /* Swab_Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B504E69C1A896E82001B414B /* Swab_Tests.swift */; };
 		B504E6A41A897017001B414B /* Swab.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B504E6461A8968DC001B414B /* Swab.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B504E6A51A897087001B414B /* Swab.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B504E6461A8968DC001B414B /* Swab.framework */; };
+		B50859D51AF0EB9800DC61FA /* SelectContactViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50859D41AF0EB9800DC61FA /* SelectContactViewController.swift */; };
 		B58D64791A898F89005A0002 /* Swab.h in Headers */ = {isa = PBXBuildFile; fileRef = B58D64681A898F81005A0002 /* Swab.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B58D647F1A898FBD005A0002 /* Swab.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58D64751A898F81005A0002 /* Swab.swift */; };
 		B58D64831A898FBE005A0002 /* Swab.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58D64751A898F81005A0002 /* Swab.swift */; };
@@ -79,6 +80,7 @@
 		B504E69B1A896E82001B414B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B504E69C1A896E82001B414B /* Swab_Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Swab_Tests.swift; sourceTree = "<group>"; };
 		B504E6AF1A898110001B414B /* Swab.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Swab.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B50859D41AF0EB9800DC61FA /* SelectContactViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectContactViewController.swift; sourceTree = "<group>"; };
 		B58D64671A898F81005A0002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B58D64681A898F81005A0002 /* Swab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Swab.h; sourceTree = "<group>"; };
 		B58D646A1A898F81005A0002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 				B58D64751A898F81005A0002 /* Swab.swift */,
 				B5D3ECDA1AEC62F700DB3754 /* SwabRecord.swift */,
 				B5D3ECDD1AEC844C00DB3754 /* SwabRecordProperty.swift */,
+				B50859D41AF0EB9800DC61FA /* SelectContactViewController.swift */,
 			);
 			name = "Framework Code";
 			path = "Swab/Framework Code";
@@ -422,6 +425,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B58D647F1A898FBD005A0002 /* Swab.swift in Sources */,
+				B50859D51AF0EB9800DC61FA /* SelectContactViewController.swift in Sources */,
 				B5D3ECDE1AEC844C00DB3754 /* SwabRecordProperty.swift in Sources */,
 				B5D3ECDB1AEC62F700DB3754 /* SwabRecord.swift in Sources */,
 			);

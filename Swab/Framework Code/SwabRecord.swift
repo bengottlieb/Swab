@@ -74,6 +74,16 @@ public class SwabRecord: NSObject {
 		return true
 	}
 	
+	public func sortFieldForOrdering(order: ABPersonSortOrdering) -> String {
+		switch Int(order) {
+		case kABPersonSortByFirstName: return self.firstName.isEmpty ? self.lastName : self.firstName
+		case kABPersonSortByLastName: return self.lastName.isEmpty ? self.firstName : self.lastName
+		default:
+			assert(false, "illegal sort order: \(order)")
+			return ""
+		}
+	}
+	
 	//=============================================================================================
 	//MARK: Loading
 	func load(fields: Set<ABPropertyID> = SwabRecord.allProperties) {
