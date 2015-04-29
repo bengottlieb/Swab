@@ -16,6 +16,11 @@ public class Swab: NSObject {
 	
 	public var isAuthorized = false
 	
+	public override class func initialize() {
+		var error: Unmanaged<CFError>?
+		var tempAddressBook = ABAddressBookCreateWithOptions(nil, &error)
+	}
+	
 	public func authorize(completion: (Bool) -> Void) {
 		self.queue.addOperationWithBlock {
 			self.isAuthorized = ABAddressBookGetAuthorizationStatus() == .Authorized
@@ -63,9 +68,10 @@ public class Swab: NSObject {
 		}
 	}
 	
-	public func findAllPeopleWith(firstName: String? = nil, lastName: String? = nil, company: String? = nil, fields: Set<ABPropertyID>? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
+	public func findAllPeopleWith(firstName: String? = nil, lastName: String? = nil, company: String? = nil, fields: [ABPropertyID]? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
 		self.fetchAddressBook { book in
 			var empty = ""
+			var fieldSet = Set(fields ?? [])
 			var full: String = "\(firstName ?? empty) \(lastName ?? empty)".stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
 			var records: [SwabRecord] = []
 			
@@ -74,7 +80,7 @@ public class Swab: NSObject {
 					if let found = ABAddressBookCopyPeopleWithName(book, searchString).takeRetainedValue() as? [ABRecord] {
 						for record in found {
 							let swab = self.recordWithABRecord(record)
-							if let fields = fields { swab.load(fields: fields) }
+							if let fields = fields { swab.load(fields: fieldSet) }
 							records.append(swab)
 						}
 					}
@@ -91,13 +97,13 @@ public class Swab: NSObject {
 		}
 	}
 	
-	public func fetchAllRecords(fields: Set<ABPropertyID>? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
+	public func fetchAllRecords(fields: [ABPropertyID] = [], completion: ([SwabRecord]) -> Void) {
 		self.fetchAddressBook { book in
 			var records: [SwabRecord] = []
 			if let found = ABAddressBookCopyArrayOfAllPeople(book).takeRetainedValue() as? [ABRecord] {
 				for record in found {
 					let swab = self.recordWithABRecord(record)
-					if let fields = fields { swab.load(fields: fields) }
+					if fields.count > 0 { swab.load(fields: Set(fields)) }
 					records.append(swab)
 				}
 			}
@@ -182,12 +188,14 @@ public class Swab: NSObject {
 
 extension Swab: ABPeoplePickerNavigationControllerDelegate {
 	public func selectContactInViewController(parent: UIViewController, animated: Bool = true, completion: (SwabRecord?) -> Void) {
-		SelectContactViewController.loadedController { controller in
+		SelectContactViewController.loadedController(selected: { record in
+			completion(record)
+		}, completion: { controller in
 			dispatch_async(dispatch_get_main_queue()) {
 				var nav = UINavigationController(rootViewController: controller)
 				parent.presentViewController(nav, animated: true, completion: nil)
 			}
-		}
+		})
 		
 //		var controller = ABPeoplePickerNavigationController()
 //		

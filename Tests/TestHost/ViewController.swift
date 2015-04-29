@@ -27,11 +27,6 @@ class ViewController: UIViewController, MFMailComposeViewControllerDelegate, UIN
 	
 	@IBAction func chooseContact() {
 		var start = NSDate()
-		Swab.instance.fetchAllRecords(fields: SwabRecord.nameProperties) { records in
-			var duration = start.timeIntervalSinceNow
-			NSLog("took %.4f sec", duration)
-		}
-		
 		Swab.instance.selectContactInViewController(self, animated: true) { record in
 			record?.generateVCard { data in
 				if let data = data {
@@ -42,7 +37,7 @@ class ViewController: UIViewController, MFMailComposeViewControllerDelegate, UIN
 	}
 	
 	@IBAction func shareContactsDB() {
-		Swab.instance.fetchAllRecords(fields: SwabRecord.noProperties) { records in
+		Swab.instance.fetchAllRecords(fields: []) { records in
 			SwabRecord.generateVCard(records) { data in
 				dispatch_async(dispatch_get_main_queue()) {
 					var controller = MFMailComposeViewController()

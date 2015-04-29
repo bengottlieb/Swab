@@ -12,10 +12,9 @@ import AddressBook
 public let kABPersonImageProperty: ABPropertyID = 50411
 
 public class SwabRecord: NSObject {
-	public static var allProperties = Set([kABPersonFirstNameProperty, kABPersonMiddleNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty, kABPersonJobTitleProperty, kABPersonDepartmentProperty, kABPersonNoteProperty, kABPersonBirthdayProperty, kABPersonPhoneProperty, kABPersonEmailProperty, kABPersonURLProperty, kABPersonInstantMessageProperty, kABPersonSocialProfileProperty, kABPersonAddressProperty, kABPersonImageProperty])
+	public static var allProperties = [kABPersonFirstNameProperty, kABPersonMiddleNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty, kABPersonJobTitleProperty, kABPersonDepartmentProperty, kABPersonNoteProperty, kABPersonBirthdayProperty, kABPersonPhoneProperty, kABPersonEmailProperty, kABPersonURLProperty, kABPersonInstantMessageProperty, kABPersonSocialProfileProperty, kABPersonAddressProperty, kABPersonImageProperty]
 	
-	public static var nameProperties = Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonImageProperty])
-	public static var noProperties = Set<ABPropertyID>()
+	public static var nameProperties = [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonImageProperty]
 	
 	public var ref: ABRecord?
 	
@@ -86,14 +85,16 @@ public class SwabRecord: NSObject {
 		}
 		
 		for prop in checkOrder {
-			if !prop.isEmpty { return prop }
+			if !prop.isEmpty {
+				return prop.stringByTrimmingCharactersInSet(NSCharacterSet.punctuationCharacterSet())
+			}
 		}
 		return ""
 	}
 	
 	//=============================================================================================
 	//MARK: Loading
-	func load(fields: Set<ABPropertyID> = SwabRecord.allProperties) {
+	func load(fields: Set<ABPropertyID> = Set(SwabRecord.allProperties)) {
 		var fieldsToLoad = fields.subtract(self.loadedFields)
 		if fieldsToLoad.count == 0 || self.ref == nil { return }
 		

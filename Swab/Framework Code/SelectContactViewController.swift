@@ -12,10 +12,12 @@ import AddressBook
 public class SelectContactViewController: UITableViewController {
 	var sections: [(title: String, records: [SwabRecord])] = []
 	var sortOrder = ABPersonSortOrdering(kABPersonSortByLastName)
+	var completion: ((SwabRecord?) -> Void)?
 	
-	class func loadedController(completion: (SelectContactViewController) -> Void) {
+	class func loadedController(selected: ((SwabRecord?) -> Void)? = nil, completion: (SelectContactViewController) -> Void) {
 		var controller = SelectContactViewController()
 		
+		controller.completion = selected
 		controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Cancel, target: controller, action: "cancel")
 		controller.load {
 			completion(controller)
@@ -23,7 +25,7 @@ public class SelectContactViewController: UITableViewController {
 	}
 	
 	func load(completion: () -> Void) {
-		Swab.instance.fetchAllRecords(fields: SwabRecord.nameProperties) { records in
+		Swab.instance.fetchAllRecords(fields: [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]) { records in
 			var sectionDict: [String: [SwabRecord]] = [:]
 			
 			for record in records {
@@ -77,6 +79,14 @@ public class SelectContactViewController: UITableViewController {
 	}
 	
 	func cancel() {
+		self.completion?(nil)
 		self.dismissViewControllerAnimated(true, completion: nil)
 	}
+	
+	public override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+		self.completion?(self.recordAtIndexPath(indexPath))
+		self.dismissViewControllerAnimated(true, completion: nil)
+	}
+	
+	
 }
