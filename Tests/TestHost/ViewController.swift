@@ -13,6 +13,13 @@ class ViewController: UIViewController {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
+		
+		Swab.instance.allRecords { all in
+			SwabRecord.generateVCard(all) { data in
+				
+			}
+		}
+		
 		// Do any additional setup after loading the view, typically from a nib.
 	}
 
@@ -24,8 +31,10 @@ class ViewController: UIViewController {
 	override func viewDidAppear(animated: Bool) {
 		
 		Swab.instance.selectContactInViewController(self, animated: true) { record in
-			if let data = record?.vcardData {
-				Swab.instance.importVCardData(data)
+			record?.generateVCard { data in
+				if let data = data {
+					Swab.instance.importVCardData(data)
+				}
 			}
 			
 //			println("result: \(record)")

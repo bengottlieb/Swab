@@ -34,9 +34,23 @@ public class SwabRecord: NSObject {
 	public var socialNetworks: [SwabRecordSocialNetwork] = []
 	public var streetAddresses: [SwabRecordStreetAddress] = []
 	
-	public var vcardData: NSData? {
-		if let record: ABRecord = self.ref { return ABPersonCreateVCardRepresentationWithPeople([record]).takeRetainedValue() }
-		return nil
+	public func generateVCard(completion: (NSData?) -> Void) {
+		Swab.instance.fetchAddressBook { book in
+			if let record: ABRecord = self.ref {
+				var data = ABPersonCreateVCardRepresentationWithPeople([record]).takeRetainedValue()
+				completion(data)
+			} else {
+				completion(nil)
+			}
+		}
+	}
+	
+	public class func generateVCard(records: [SwabRecord], completion: (NSData?) -> Void) {
+		Swab.instance.fetchAddressBook { book in
+			var refs = records.map { $0.ref! }
+			var data = ABPersonCreateVCardRepresentationWithPeople(refs).takeRetainedValue()
+			completion(data)
+		}
 	}
 	
 	public var displayName: String {
@@ -56,6 +70,7 @@ public class SwabRecord: NSObject {
 		
 		return true
 	}
+	
 	//=============================================================================================
 	//MARK: Loading
 	func load(fields: Set<ABPropertyID> = SwabRecord.allProperties) {
