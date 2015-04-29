@@ -91,7 +91,7 @@ public class Swab: NSObject {
 		}
 	}
 	
-	public func allRecords(fields: Set<ABPropertyID>? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
+	public func fetchAllRecords(fields: Set<ABPropertyID>? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
 		self.fetchAddressBook { book in
 			var records: [SwabRecord] = []
 			if let found = ABAddressBookCopyArrayOfAllPeople(book).takeRetainedValue() as? [ABRecord] {
