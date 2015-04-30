@@ -14,15 +14,15 @@ public class SelectContactViewController: UITableViewController {
 	var sortOrder = ABPersonSortOrdering(kABPersonSortByLastName)
 	var completion: ((SwabRecord?) -> Void)?
 	
-	class func loadedController(selected: ((SwabRecord?) -> Void)? = nil, completion: (SelectContactViewController) -> Void) {
-		var controller = SelectContactViewController()
+	init(selected: ((SwabRecord?) -> Void)?) {
+		super.init(nibName: nil, bundle: nil)
 		
-		controller.completion = selected
-		controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Cancel, target: controller, action: "cancel")
-		controller.load {
-			completion(controller)
-		}
+		self.completion = selected
+		self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Cancel, target: self, action: "cancel")
+		self.load { }
 	}
+
+	public required init!(coder aDecoder: NSCoder!) { fatalError("init(coder:) has not been implemented") }
 	
 	func load(completion: () -> Void) {
 		Swab.instance.fetchAllRecords(fields: [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]) { records in
@@ -42,6 +42,7 @@ public class SelectContactViewController: UITableViewController {
 			
 			var array = sectionDict.keys.map({( title: $0, records: sectionDict[$0]! )})
 			self.sections = sorted(array, { $0.title < $1.title })
+			dispatch_async(dispatch_get_main_queue()) { self.tableView.reloadData()	}
 			completion()
 		}
 	}

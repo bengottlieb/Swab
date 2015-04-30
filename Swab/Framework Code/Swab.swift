@@ -188,15 +188,11 @@ public class Swab: NSObject {
 
 extension Swab: ABPeoplePickerNavigationControllerDelegate {
 	public func selectContactInViewController(parent: UIViewController, animated: Bool = true, completion: (SwabRecord?) -> Void) {
-		SelectContactViewController.loadedController(selected: { record in
+		var nav = UINavigationController(rootViewController: SelectContactViewController(selected: { record in
 			completion(record)
-		}, completion: { controller in
-			dispatch_async(dispatch_get_main_queue()) {
-				var nav = UINavigationController(rootViewController: controller)
-				parent.presentViewController(nav, animated: true, completion: nil)
-			}
-		})
-		
+		}))
+		parent.presentViewController(nav, animated: true, completion: nil)
+
 //		var controller = ABPeoplePickerNavigationController()
 //		
 //		controller.peoplePickerDelegate = self
