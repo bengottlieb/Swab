@@ -10,7 +10,7 @@ import UIKit
 import AddressBook
 
 public class SelectContactViewController: UITableViewController {
-	var sections: [(title: String, records: [SwabRecord])] = []
+	var sections: [(title: String, records: [(sort: String, record: SwabRecord)])] = []
 	var sortOrder = ABPersonSortOrdering(kABPersonSortByLastName)
 	var completion: ((SwabRecord?) -> Void)?
 	
@@ -26,17 +26,17 @@ public class SelectContactViewController: UITableViewController {
 	
 	func load(completion: () -> Void) {
 		Swab.instance.fetchAllRecords(fields: [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]) { records in
-			var sectionDict: [String: [SwabRecord]] = [:]
+			var sectionDict: [String: [(sort: String, record: SwabRecord)]] = [:]
 			
 			for record in records {
-				var sort = record.sortFieldForOrdering(self.sortOrder) as NSString
+				var sort = record.sortStringForOrdering(self.sortOrder) as NSString
 				var sortKey = sort.length > 0 ? sort.substringToIndex(1).uppercaseString : "-"
 				
 				if var current = sectionDict[sortKey] {
-					current.append(record)
-					sectionDict[sortKey] = current
+					current.append((sort: sort as String, record: record))
+					sectionDict[sortKey] = sorted(current, { $0.sort < $1.sort })
 				} else {
-					sectionDict[sortKey] = [record]
+					sectionDict[sortKey] = [(sort: sort as String, record: record)]
 				}
 			}
 			
@@ -59,7 +59,7 @@ public class SelectContactViewController: UITableViewController {
 		var cell = tableView.dequeueReusableCellWithIdentifier("cell") as? UITableViewCell ?? UITableViewCell(style: .Value1, reuseIdentifier: "cell")
 		
 		if let record = self.recordAtIndexPath(indexPath) {
-			cell.textLabel?.text = record.displayName
+			cell.textLabel?.attributedText = record.attributedDisplayNameForSortField(self.sortOrder)
 		}
 		
 		return cell
@@ -76,7 +76,7 @@ public class SelectContactViewController: UITableViewController {
 		
 		if indexPath.row >= section.records.count { return nil }
 		
-		return section.records[indexPath.row]
+		return section.records[indexPath.row].record
 	}
 	
 	func cancel() {
@@ -89,5 +89,7 @@ public class SelectContactViewController: UITableViewController {
 		self.dismissViewControllerAnimated(true, completion: nil)
 	}
 	
-	
+	public override func sectionIndexTitlesForTableView(tableView: UITableView) -> [AnyObject]! {
+		return self.sections.map({ return $0.title })
+	}
 }

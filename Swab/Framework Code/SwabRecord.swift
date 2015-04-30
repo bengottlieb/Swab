@@ -64,6 +64,29 @@ public class SwabRecord: NSObject {
 		return self.companyName
 	}
 	
+	public func attributedDisplayNameForSortField(order: ABPersonSortOrdering) -> NSAttributedString {
+		self.load(fields: Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
+		var sortField = self.sortFieldForOrdering(order)
+		var size: CGFloat = 15.0
+		var plainAttr = [ NSFontAttributeName: UIFont.systemFontOfSize(size)]
+		var boldAttr = [ NSFontAttributeName: UIFont.boldSystemFontOfSize(size)]
+		var string = NSMutableAttributedString()
+		
+		if sortField == kABPersonFirstNameProperty {
+			string.appendAttributedString(NSAttributedString(string: self.firstName, attributes: boldAttr))
+			if string.length > 0 { string.appendAttributedString(NSAttributedString(string: " ")) }
+			string.appendAttributedString(NSAttributedString(string: self.lastName, attributes: plainAttr))
+		} else if sortField == kABPersonLastNameProperty {
+			string.appendAttributedString(NSAttributedString(string: self.firstName, attributes: plainAttr))
+			if string.length > 0 { string.appendAttributedString(NSAttributedString(string: " ")) }
+			string.appendAttributedString(NSAttributedString(string: self.lastName, attributes: boldAttr))
+		} else {
+			return NSAttributedString(string: self.companyName, attributes: boldAttr)
+		}
+
+		return string
+	}
+	
 	public func isDuplicateOf(other: SwabRecord) -> Bool {
 		self.load()
 		other.load()
@@ -72,24 +95,28 @@ public class SwabRecord: NSObject {
 		
 		return true
 	}
-	
-	public func sortFieldForOrdering(order: ABPersonSortOrdering) -> String {
-		var checkOrder = [""]
+
+	public func sortFieldForOrdering(order: ABPersonSortOrdering) -> ABPropertyID {
+		var checkOrder: [ABPropertyID] = []
 		
 		switch Int(order) {
-		case kABPersonSortByFirstName: checkOrder = [self.firstName, self.lastName, self.companyName]
-		case kABPersonSortByLastName: checkOrder = [self.lastName, self.firstName, self.companyName]
+		case kABPersonSortByFirstName: checkOrder = [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]
+		case kABPersonSortByLastName: checkOrder = [kABPersonLastNameProperty, kABPersonFirstNameProperty, kABPersonOrganizationProperty]
 		default:
 			assert(false, "illegal sort order: \(order)")
-			return ""
+			break
 		}
 		
 		for prop in checkOrder {
-			if !prop.isEmpty {
-				return prop.stringByTrimmingCharactersInSet(NSCharacterSet.punctuationCharacterSet())
+			if let string = self[prop] where !string.isEmpty {
+				return prop
 			}
 		}
-		return ""
+		return kABPersonLastNameProperty
+	}
+	
+	public func sortStringForOrdering(order: ABPersonSortOrdering) -> String {
+		return self[self.sortFieldForOrdering(order)]?.stringByTrimmingCharactersInSet(NSCharacterSet.punctuationCharacterSet()) ?? ""
 	}
 	
 	//=============================================================================================
@@ -107,6 +134,20 @@ public class SwabRecord: NSObject {
 	
 	var loadedFields = Set<ABPropertyID>()
 	var isLoading = false
+	
+	subscript(key: ABPropertyID) -> String? {
+		get {
+			switch key {
+			case kABPersonFirstNameProperty: return self.firstName
+			case kABPersonLastNameProperty: return self.lastName
+			case kABPersonMiddleNameProperty: return self.middleName
+			case kABPersonOrganizationProperty: return self.companyName
+			case kABPersonJobTitleProperty: return self.title
+			case kABPersonDepartmentProperty: return self.department
+			default: return nil
+			}
+		}
+	}
 	
 	func loadField(field: ABPropertyID) {
 		switch (field) {
