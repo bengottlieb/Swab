@@ -8,6 +8,7 @@
 
 import UIKit
 import AddressBook
+import AddressBookUI
 
 public class SelectContactViewController: UITableViewController {
 	var sections: [(title: String, records: [(sort: String, record: SwabRecord)])] = []
@@ -60,6 +61,8 @@ public class SelectContactViewController: UITableViewController {
 		
 		if let record = self.recordAtIndexPath(indexPath) {
 			cell.textLabel?.attributedText = record.attributedDisplayNameForSortField(self.sortOrder)
+			
+			cell.accessoryType = .DetailButton
 		}
 		
 		return cell
@@ -91,5 +94,18 @@ public class SelectContactViewController: UITableViewController {
 	
 	public override func sectionIndexTitlesForTableView(tableView: UITableView) -> [AnyObject]! {
 		return self.sections.map({ return $0.title })
+	}
+	
+	public override func tableView(tableView: UITableView, accessoryButtonTappedForRowWithIndexPath indexPath: NSIndexPath) {
+		if let record = self.recordAtIndexPath(indexPath) {
+			var controller = ABPersonViewController()
+		
+			controller.displayedPerson = record.ref
+			controller.allowsEditing = false
+			controller.allowsActions = false
+			controller.title = record.displayName
+			
+			self.navigationController?.pushViewController(controller, animated: true)
+		}
 	}
 }
