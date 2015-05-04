@@ -57,12 +57,11 @@ public class SelectContactViewController: UITableViewController {
 	}
 	
 	public override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-		var cell = tableView.dequeueReusableCellWithIdentifier("cell") as? UITableViewCell ?? UITableViewCell(style: .Value1, reuseIdentifier: "cell")
+		var cell = tableView.dequeueReusableCellWithIdentifier("cell") as? SelectContactTableViewCell ?? SelectContactTableViewCell(style: .Value1, reuseIdentifier: "cell")
 		
 		if let record = self.recordAtIndexPath(indexPath) {
-			cell.textLabel?.attributedText = record.attributedDisplayNameForSortField(self.sortOrder)
-			
-			cell.accessoryType = .DetailButton
+			cell.setRecord(record, sortOrder: self.sortOrder)
+			cell.controller = self
 		}
 		
 		return cell
@@ -98,14 +97,80 @@ public class SelectContactViewController: UITableViewController {
 	
 	public override func tableView(tableView: UITableView, accessoryButtonTappedForRowWithIndexPath indexPath: NSIndexPath) {
 		if let record = self.recordAtIndexPath(indexPath) {
-			var controller = ABPersonViewController()
-		
-			controller.displayedPerson = record.ref
-			controller.allowsEditing = false
-			controller.allowsActions = false
-			controller.title = record.displayName
-			
-			self.navigationController?.pushViewController(controller, animated: true)
+			self.showInfoForRecord(record)
 		}
 	}
+	
+	func showInfoForRecord(record: SwabRecord) {
+		var controller = ABPersonViewController()
+		
+		controller.displayedPerson = record.ref
+		controller.allowsEditing = false
+		controller.allowsActions = false
+		controller.title = record.displayName
+		
+		self.navigationController?.pushViewController(controller, animated: true)
+	}
+}
+
+class SelectContactTableViewCell: UITableViewCell {
+	var record: SwabRecord?
+	var controller: SelectContactViewController?
+	
+	
+	var sortOrder = ABPersonSortOrdering(kABPersonSortByLastName)
+	
+	func setRecord(record: SwabRecord, sortOrder: ABPersonSortOrdering) {
+		self.record = record
+		self.sortOrder = sortOrder
+		self.updateUI()
+	}
+
+	func updateUI() {
+		if let record = self.record {
+			self.textLabel?.attributedText = record.attributedDisplayNameForSortField(self.sortOrder)
+
+			Swab.instance.queueBlock {
+				record.load(fields: Set([kABPersonImageProperty]))
+				var image = record.image
+				
+				UIGraphicsBeginImageContext(CGSize(width: 1, height: 1))
+				image?.drawAtPoint(CGPointZero)
+				UIGraphicsEndImageContext()
+				
+				dispatch_async(dispatch_get_main_queue()) {
+					if let current = self.record where record === current {
+						self.setButtonImage(image)
+					}
+				}
+			}
+		}
+	}
+
+	var imageButton: UIButton?
+	func setButtonImage(image: UIImage?) {
+		if let image = image {
+			if imageButton == nil {
+				var bounds = CGRect(x: 0, y: 0, width: 34, height: 34)
+				self.imageButton = UIButton.buttonWithType(.Custom) as? UIButton
+				self.imageButton?.bounds = bounds
+				self.imageButton?.showsTouchWhenHighlighted = true
+				self.imageButton?.layer.cornerRadius = bounds.size.width / 2
+				self.imageButton?.layer.masksToBounds = true
+				self.imageButton?.addTarget(self, action: "tappedImage:", forControlEvents: .TouchUpInside)
+			}
+			self.accessoryView = imageButton
+			self.imageButton?.setBackgroundImage(image, forState: .Normal)
+		} else {
+			self.accessoryView = nil
+			self.accessoryType = .DetailButton
+		}
+	}
+	
+	func tappedImage(sender: AnyObject) {
+		if let record = self.record {
+			self.controller?.showInfoForRecord(record)
+		}
+	}
+	
 }
