@@ -14,6 +14,13 @@ public let kABPersonImageProperty: ABPropertyID = 50411
 public class SwabRecord: NSObject {
 	public static var allProperties = [kABPersonFirstNameProperty, kABPersonMiddleNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty, kABPersonJobTitleProperty, kABPersonDepartmentProperty, kABPersonNoteProperty, kABPersonBirthdayProperty, kABPersonPhoneProperty, kABPersonEmailProperty, kABPersonURLProperty, kABPersonInstantMessageProperty, kABPersonSocialProfileProperty, kABPersonAddressProperty, kABPersonImageProperty]
 	
+	public struct servicesAndLabels {
+		public static let emailLabels = [kABWorkLabel as String, kABHomeLabel as String, kABOtherLabel as String]
+		public static let phoneLabels = [kABPersonPhoneMainLabel as String, kABPersonPhoneIPhoneLabel as String, kABPersonPhoneHomeFAXLabel as String, kABPersonPhoneWorkFAXLabel as String, kABPersonPhoneOtherFAXLabel as String, kABPersonPhonePagerLabel as String]
+		public static let socialServices = [kABPersonSocialProfileServiceTwitter as String, kABPersonSocialProfileServiceSinaWeibo as String, kABPersonSocialProfileServiceFacebook as String, kABPersonSocialProfileServiceGameCenter as String, kABPersonSocialProfileServiceMyspace as String, kABPersonSocialProfileServiceFlickr as String, kABPersonSocialProfileServiceLinkedIn as String]
+		public static let imServices = [kABPersonInstantMessageServiceYahoo as String, kABPersonInstantMessageServiceJabber as String, kABPersonInstantMessageServiceMSN as String, kABPersonInstantMessageServiceICQ as String, kABPersonInstantMessageServiceAIM as String, kABPersonInstantMessageServiceQQ as String, kABPersonInstantMessageServiceGoogleTalk as String, kABPersonInstantMessageServiceSkype as String, kABPersonInstantMessageServiceFacebook as String, kABPersonInstantMessageServiceGaduGadu as String]
+	}
+	
 	public static var nameProperties = [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonImageProperty]
 	
 	public var ref: ABRecord?
@@ -117,6 +124,27 @@ public class SwabRecord: NSObject {
 	
 	public func sortStringForOrdering(order: ABPersonSortOrdering) -> String {
 		return self[self.sortFieldForOrdering(order)]?.stringByTrimmingCharactersInSet(NSCharacterSet.punctuationCharacterSet()) ?? ""
+	}
+	
+	public var primaryEmail: SwabRecordEmailAddress? {
+		self.load(fields: Set([kABPersonEmailProperty]))
+		
+		for email in self.emailAddresses {
+			if email.label == "E-mail" { return email; }
+		}
+		
+		if self.emailAddresses.count > 0 { return self.emailAddresses[0] }
+		return nil
+	}
+	
+	public var primaryPhone: SwabRecordPhoneNumber? {
+		self.load(fields: Set([kABPersonPhoneProperty]))
+		
+		for phone in self.phoneNumbers { if phone.label == (kABPersonPhoneMainLabel as String) { return phone } }
+		for phone in self.phoneNumbers { if phone.label == (kABPersonPhoneIPhoneLabel as String) { return phone } }
+		
+		if self.phoneNumbers.count > 0 { return self.phoneNumbers[0] }
+		return nil
 	}
 	
 	//=============================================================================================

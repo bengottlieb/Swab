@@ -26,7 +26,9 @@ public class SelectContactViewController: UITableViewController {
 	public required init!(coder aDecoder: NSCoder!) { fatalError("init(coder:) has not been implemented") }
 	
 	func load(completion: () -> Void) {
-		Swab.instance.fetchAllRecords(fields: [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]) { records in
+		var fields = [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]
+		
+		Swab.instance.fetchAllRecords(fields: fields) { records in
 			var sectionDict: [String: [(sort: String, record: SwabRecord)]] = [:]
 			
 			for record in records {

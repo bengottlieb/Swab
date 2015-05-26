@@ -11,7 +11,11 @@ import AddressBook
 
 public class SwabRecordProperty: NSObject {
 	public var label: String = ""
-	public var prettyLabel: String = ""
+	public var prettyLabel: String {
+		var label = self.label
+		if let pretty = ABAddressBookCopyLocalizedLabel(label)?.takeRetainedValue() as? String { return pretty }
+		return label
+	}
 	var record: SwabRecord?
 	public var index = -1
 	class var propertyID: ABPropertyID { return kABPersonPhoneProperty }
@@ -90,7 +94,7 @@ public class SwabRecordPhoneNumber: SwabRecordProperty {
 	public override var description: String { return "\(self.label): \(self.number)" }
 }
 
-public class SwabRecordEmailAddress: SwabRecordProperty {
+public class SwabRecordEmailAddress: SwabRecordProperty {		//	[_$!<Work>!$_, _$!<Home>!$_, E-mail, _$!<Other>!$_ ]
 	public var email: NSString = ""
 	override class var propertyID: ABPropertyID { return kABPersonEmailProperty }
 	init(label: String, email address: String) {
