@@ -8,7 +8,7 @@
 
 import UIKit
 import AddressBook
-import AddressBookUI
+import AddressBookUI.ABPersonViewController
 
 public class SelectContactViewController: UITableViewController {
 	var sections: [(title: String, records: [(sort: String, record: SwabRecord)])] = []

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 import AddressBook
 
 public let kABPersonImageProperty: ABPropertyID = 50411
@@ -149,7 +150,7 @@ public class SwabRecord: NSObject {
 	
 	//=============================================================================================
 	//MARK: Loading
-	func load(fields: Set<ABPropertyID> = Set(SwabRecord.allProperties)) {
+	public func load(fields: Set<ABPropertyID> = Set(SwabRecord.allProperties)) {
 		var fieldsToLoad = fields.subtract(self.loadedFields)
 		if fieldsToLoad.count == 0 || self.ref == nil { return }
 		

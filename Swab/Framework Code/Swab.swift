@@ -7,27 +7,36 @@
 //
 
 import Foundation
-import AddressBook
-import AddressBookUI
 import UIKit
+import AddressBook
 
 public class Swab: NSObject {
 	public class var instance: Swab { struct s { static let manager = Swab() }; return s.manager }
 	
-	public var isAuthorized = false
+	public var isAuthorized: Bool { return (ABAddressBookGetAuthorizationStatus() == .Authorized) }
 	
 	public override class func initialize() {
 		var error: Unmanaged<CFError>?
 		var tempAddressBook = ABAddressBookCreateWithOptions(nil, &error)
 	}
 	
+	
+	public func status() -> ABAuthorizationStatus { return ABAddressBookGetAuthorizationStatus() }
+	
 	public func authorize(completion: (Bool) -> Void) {
-		self.queue.addOperationWithBlock {
-			self.isAuthorized = ABAddressBookGetAuthorizationStatus() == .Authorized
+		var authInProgress = self.authorizationInProgress
 		
+		self.queue.addOperationWithBlock {
 			if !self.isAuthorized {
+				if ABAddressBookGetAuthorizationStatus() == .Denied {
+					completion(false)
+					return
+				}
+				
 				self.pendingAuthorizations.append(completion)
-				if self.authorizationInProgress { return }
+				if self.authorizationInProgress {
+					return
+				}
 				
 				self.authorizationInProgress = true
 
@@ -37,6 +46,7 @@ public class Swab: NSObject {
 						self.addressBook = ABAddressBookCreateWithOptions(nil, &error).takeRetainedValue()
 					}
 					
+					self.authorizationInProgress = false
 					for completion in self.pendingAuthorizations { completion(success) }
 					self.pendingAuthorizations = []
 				}
@@ -51,7 +61,7 @@ public class Swab: NSObject {
 	}
 	
 	public func fetchAddressBook(completion: (ABAddressBook?) -> Void) {
-		if self.isAuthorized {
+		if self.addressBook != nil {
 			self.queueBlock {  completion(self.addressBook) }
 		} else {
 			self.authorize { success in completion(self.addressBook) }
@@ -100,6 +110,10 @@ public class Swab: NSObject {
 	public func fetchAllRecords(fields: [ABPropertyID] = [], completion: ([SwabRecord]) -> Void) {
 		self.fetchAddressBook { book in
 			var records: [SwabRecord] = []
+			if book == nil {
+				completion([])
+				return
+			}
 			if let found = ABAddressBookCopyArrayOfAllPeople(book).takeRetainedValue() as? [ABRecord] {
 				for record in found {
 					let swab = self.recordWithABRecord(record)
@@ -186,12 +200,20 @@ public class Swab: NSObject {
 	}
 }
 
-extension Swab: ABPeoplePickerNavigationControllerDelegate {
+extension Swab {
 	public func selectContactInViewController(parent: UIViewController, animated: Bool = true, completion: (SwabRecord?) -> Void) {
-		var nav = UINavigationController(rootViewController: SelectContactViewController(selected: { record in
-			completion(record)
-		}))
-		parent.presentViewController(nav, animated: true, completion: nil)
+		self.authorize { success in
+			if success {
+				dispatch_async(dispatch_get_main_queue()) {
+					var nav = UINavigationController(rootViewController: SelectContactViewController(selected: { record in
+						completion(record)
+					}))
+					parent.presentViewController(nav, animated: true, completion: nil)
+				}
+			} else {
+				completion(nil)
+			}
+		}
 
 //		var controller = ABPeoplePickerNavigationController()
 //		
@@ -200,17 +222,17 @@ extension Swab: ABPeoplePickerNavigationControllerDelegate {
 //		parent.presentViewController(controller, animated: true, completion: nil)
 	}
 
-	public func peoplePickerNavigationController(peoplePicker: ABPeoplePickerNavigationController!, didSelectPerson person: ABRecord!) {
-		var recordID = ABRecordGetRecordID(person)
-		
-		self.findRecordWithID(recordID) { record in
-			self.selectContactCompletion?(record)
-		}
-	}
-	
-	public func peoplePickerNavigationControllerDidCancel(peoplePicker: ABPeoplePickerNavigationController!) {
-		self.selectContactCompletion?(nil)
-	}
-
+//	public func peoplePickerNavigationController(peoplePicker: ABPeoplePickerNavigationController!, didSelectPerson person: ABRecord!) {
+//		var recordID = ABRecordGetRecordID(person)
+//		
+//		self.findRecordWithID(recordID) { record in
+//			self.selectContactCompletion?(record)
+//		}
+//	}
+//	
+//	public func peoplePickerNavigationControllerDidCancel(peoplePicker: ABPeoplePickerNavigationController!) {
+//		self.selectContactCompletion?(nil)
+//	}
+//
 
 }
