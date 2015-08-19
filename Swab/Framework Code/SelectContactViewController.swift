@@ -23,28 +23,28 @@ public class SelectContactViewController: UITableViewController {
 		self.load { }
 	}
 
-	public required init!(coder aDecoder: NSCoder!) { fatalError("init(coder:) has not been implemented") }
+	public required init!(coder aDecoder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 	
 	func load(completion: () -> Void) {
-		var fields = [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]
+		let fields = [kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]
 		
-		Swab.instance.fetchAllRecords(fields: fields) { records in
+		Swab.instance.fetchAllRecords(fields) { records in
 			var sectionDict: [String: [(sort: String, record: SwabRecord)]] = [:]
 			
 			for record in records {
-				var sort = record.sortStringForOrdering(self.sortOrder) as NSString
-				var sortKey = sort.length > 0 ? sort.substringToIndex(1).uppercaseString : "-"
+				let sort = record.sortStringForOrdering(self.sortOrder) as NSString
+				let sortKey = sort.length > 0 ? sort.substringToIndex(1).uppercaseString : "-"
 				
 				if var current = sectionDict[sortKey] {
 					current.append((sort: sort as String, record: record))
-					sectionDict[sortKey] = sorted(current, { $0.sort < $1.sort })
+					sectionDict[sortKey] = current.sort({ $0.sort < $1.sort })
 				} else {
 					sectionDict[sortKey] = [(sort: sort as String, record: record)]
 				}
 			}
 			
-			var array = sectionDict.keys.map({( title: $0, records: sectionDict[$0]! )})
-			self.sections = sorted(array, { $0.title < $1.title })
+			let array = sectionDict.keys.map({( title: $0, records: sectionDict[$0]! )})
+			self.sections = array.sort({ $0.title < $1.title })
 			dispatch_async(dispatch_get_main_queue()) { self.tableView.reloadData()	}
 			completion()
 		}
@@ -55,11 +55,11 @@ public class SelectContactViewController: UITableViewController {
 	}
 	
 	public override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-		return count(sections)
+		return sections.count
 	}
 	
 	public override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-		var cell = tableView.dequeueReusableCellWithIdentifier("cell") as? SelectContactTableViewCell ?? SelectContactTableViewCell(style: .Value1, reuseIdentifier: "cell")
+		let cell = tableView.dequeueReusableCellWithIdentifier("cell") as? SelectContactTableViewCell ?? SelectContactTableViewCell(style: .Value1, reuseIdentifier: "cell")
 		
 		if let record = self.recordAtIndexPath(indexPath) {
 			cell.setRecord(record, sortOrder: self.sortOrder)
@@ -93,7 +93,7 @@ public class SelectContactViewController: UITableViewController {
 		self.dismissViewControllerAnimated(true, completion: nil)
 	}
 	
-	public override func sectionIndexTitlesForTableView(tableView: UITableView) -> [AnyObject]! {
+	public override func sectionIndexTitlesForTableView(tableView: UITableView) -> [String]? {
 		return self.sections.map({ return $0.title })
 	}
 	
@@ -104,9 +104,11 @@ public class SelectContactViewController: UITableViewController {
 	}
 	
 	func showInfoForRecord(record: SwabRecord) {
-		var controller = ABPersonViewController()
+		let controller = ABPersonViewController()
 		
-		controller.displayedPerson = record.ref
+		if let ref = record.ref {
+			controller.displayedPerson = ref
+		}
 		controller.allowsEditing = false
 		controller.allowsActions = false
 		controller.title = record.displayName
@@ -133,8 +135,8 @@ class SelectContactTableViewCell: UITableViewCell {
 			self.textLabel?.attributedText = record.attributedDisplayNameForSortField(self.sortOrder)
 
 			Swab.instance.queueBlock {
-				record.load(fields: Set([kABPersonImageProperty]))
-				var image = record.image
+				record.load(Set([kABPersonImageProperty]))
+				let image = record.image
 				
 				UIGraphicsBeginImageContext(CGSize(width: 1, height: 1))
 				image?.drawAtPoint(CGPointZero)
@@ -153,8 +155,8 @@ class SelectContactTableViewCell: UITableViewCell {
 	func setButtonImage(image: UIImage?) {
 		if let image = image {
 			if imageButton == nil {
-				var bounds = CGRect(x: 0, y: 0, width: 34, height: 34)
-				self.imageButton = UIButton.buttonWithType(.Custom) as? UIButton
+				let bounds = CGRect(x: 0, y: 0, width: 34, height: 34)
+				self.imageButton = UIButton(type: .Custom)
 				self.imageButton?.bounds = bounds
 				self.imageButton?.showsTouchWhenHighlighted = true
 				self.imageButton?.layer.cornerRadius = bounds.size.width / 2

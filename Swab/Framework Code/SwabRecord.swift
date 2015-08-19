@@ -47,7 +47,7 @@ public class SwabRecord: NSObject {
 	public func generateVCard(completion: (NSData?) -> Void) {
 		Swab.instance.fetchAddressBook { book in
 			if let record: ABRecord = self.ref {
-				var data = ABPersonCreateVCardRepresentationWithPeople([record]).takeRetainedValue()
+				let data = ABPersonCreateVCardRepresentationWithPeople([record]).takeRetainedValue()
 				completion(data)
 			} else {
 				completion(nil)
@@ -57,28 +57,28 @@ public class SwabRecord: NSObject {
 	
 	public class func generateVCard(records: [SwabRecord], completion: (NSData?) -> Void) {
 		Swab.instance.fetchAddressBook { book in
-			var refs = records.map { $0.ref! }
-			var data = ABPersonCreateVCardRepresentationWithPeople(refs).takeRetainedValue()
+			let refs = records.map { $0.ref! }
+			let data = ABPersonCreateVCardRepresentationWithPeople(refs).takeRetainedValue()
 			completion(data)
 		}
 	}
 	
 	public var displayName: String {
-		self.load(fields: Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
+		self.load(Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
 			
 		var string = "\(self.firstName) \(self.lastName)"
-		if count(string) > 1 { return string }
+		if string.characters.count > 1 { return string }
 		
 		return self.companyName
 	}
 	
 	public func attributedDisplayNameForSortField(order: ABPersonSortOrdering) -> NSAttributedString {
-		self.load(fields: Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
-		var sortField = self.sortFieldForOrdering(order)
-		var size: CGFloat = 15.0
-		var plainAttr = [ NSFontAttributeName: UIFont.systemFontOfSize(size)]
-		var boldAttr = [ NSFontAttributeName: UIFont.boldSystemFontOfSize(size)]
-		var string = NSMutableAttributedString()
+		self.load(Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
+		let sortField = self.sortFieldForOrdering(order)
+		let size: CGFloat = 15.0
+		let plainAttr = [ NSFontAttributeName: UIFont.systemFontOfSize(size)]
+		let boldAttr = [ NSFontAttributeName: UIFont.boldSystemFontOfSize(size)]
+		let string = NSMutableAttributedString()
 		
 		if sortField == kABPersonFirstNameProperty {
 			string.appendAttributedString(NSAttributedString(string: self.firstName, attributes: boldAttr))
@@ -128,7 +128,7 @@ public class SwabRecord: NSObject {
 	}
 	
 	public var primaryEmail: SwabRecordEmailAddress? {
-		self.load(fields: Set([kABPersonEmailProperty]))
+		self.load(Set([kABPersonEmailProperty]))
 		
 		for email in self.emailAddresses {
 			if email.label == "E-mail" { return email; }
@@ -139,7 +139,7 @@ public class SwabRecord: NSObject {
 	}
 	
 	public var primaryPhone: SwabRecordPhoneNumber? {
-		self.load(fields: Set([kABPersonPhoneProperty]))
+		self.load(Set([kABPersonPhoneProperty]))
 		
 		for phone in self.phoneNumbers { if phone.label == (kABPersonPhoneMainLabel as String) { return phone } }
 		for phone in self.phoneNumbers { if phone.label == (kABPersonPhoneIPhoneLabel as String) { return phone } }
@@ -246,7 +246,7 @@ public class SwabRecord: NSObject {
 	func writeString(string: String, toProperty prop: ABPropertyID) -> NSError? {
 		var error: Unmanaged<CFError>?
 		if !ABRecordSetValue(self.ref, prop, string, &error) {
-			println("Problem saving \(string) to \(prop): \(error)")
+			print("Problem saving \(string) to \(prop): \(error)")
 		}
 		return nil
 	}

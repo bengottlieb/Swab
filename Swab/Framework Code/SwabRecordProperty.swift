@@ -13,7 +13,7 @@ import AddressBook
 public class SwabRecordProperty: NSObject {
 	public var label: String = ""
 	public var prettyLabel: String {
-		var label = self.label
+		let label = self.label
 		if let pretty = ABAddressBookCopyLocalizedLabel(label)?.takeRetainedValue() as? String { return pretty }
 		return label
 	}
@@ -34,10 +34,10 @@ public class SwabRecordProperty: NSObject {
 	class func loadMultiplesFrom(record: SwabRecord) -> [SwabRecordProperty] {
 		var results: [SwabRecordProperty] = []
 		if let properties: ABMultiValueRef = ABRecordCopyValue(record.ref, self.propertyID)?.takeRetainedValue() {
-			var count = ABMultiValueGetCount(properties)
+			let count = ABMultiValueGetCount(properties)
 			
 			for i in 0..<count {
-				results.append(self(index: i, ofProperty: properties, inRecord: record))
+				results.append(self.init(index: i, ofProperty: properties, inRecord: record))
 			}
 		}
 		
@@ -49,7 +49,7 @@ public class SwabRecordProperty: NSObject {
 	func copyMultiDictionary(index: Int, ofProperty: ABMultiValueRef) -> [NSObject: AnyObject]? { return ABMultiValueCopyValueAtIndex(ofProperty, index)?.takeRetainedValue() as? [NSObject: AnyObject] }
 	
 	func wasModified() {
-		var type = self.dynamicType.propertyID
+		let type = self.dynamicType.propertyID
 		self.record?.fieldChanged(type)
 	}
 	
@@ -70,7 +70,7 @@ public class SwabRecordProperty: NSObject {
 		
 		var error: Unmanaged<CFError>?
 		if !ABRecordSetValue(self.record!.ref, self.dynamicType.propertyID, mutable, &error) {
-			println("Error saving \(self): \(error)")
+			print("Error saving \(self): \(error)")
 		}
 		return nil
 	}
@@ -148,10 +148,10 @@ public class SwabRecordIMService: SwabRecordProperty {
 		}
 	}
 	override var value: NSObject? {
-		var dict = NSMutableDictionary()
+		let dict = NSMutableDictionary()
 		
-		if count(self.username) > 0 { dict[kABPersonInstantMessageUsernameKey as String] = self.username as NSString }
-		if count(self.service) > 0 { dict[kABPersonInstantMessageServiceKey as String] = self.service as NSString }
+		if self.username.characters.count > 0 { dict[kABPersonInstantMessageUsernameKey as String] = self.username as NSString }
+		if self.service.characters.count > 0 { dict[kABPersonInstantMessageServiceKey as String] = self.service as NSString }
 		return dict
 	}
 
@@ -198,10 +198,10 @@ public class SwabRecordStreetAddress: SwabRecordProperty {
 	}
 
 	override var value: NSObject? {
-		var dict = NSMutableDictionary()
+		let dict = NSMutableDictionary()
 		
-		if count(self.street) > 0 { dict[kABPersonAddressStreetKey as String] = self.street as NSString }
-		if count(self.city) > 0 { dict[kABPersonAddressCityKey as String] = self.city as NSString }
+		if self.street.characters.count > 0 { dict[kABPersonAddressStreetKey as String] = self.street as NSString }
+		if self.city.characters.count > 0 { dict[kABPersonAddressCityKey as String] = self.city as NSString }
 		return dict
 	}
 	

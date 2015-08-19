@@ -17,14 +17,15 @@ public class Swab: NSObject {
 	
 	public override class func initialize() {
 		var error: Unmanaged<CFError>?
-		var tempAddressBook = ABAddressBookCreateWithOptions(nil, &error)
+		//var tempAddressBook =
+		ABAddressBookCreateWithOptions(nil, &error)
 	}
 	
 	
 	public func status() -> ABAuthorizationStatus { return ABAddressBookGetAuthorizationStatus() }
 	
 	public func authorize(completion: (Bool) -> Void) {
-		var authInProgress = self.authorizationInProgress
+		let authInProgress = self.authorizationInProgress
 		
 		self.queue.addOperationWithBlock {
 			if !self.isAuthorized {
@@ -34,7 +35,7 @@ public class Swab: NSObject {
 				}
 				
 				self.pendingAuthorizations.append(completion)
-				if self.authorizationInProgress {
+				if authInProgress {
 					return
 				}
 				
@@ -72,7 +73,7 @@ public class Swab: NSObject {
 		self.fetchAddressBook { book in
 			if ABAddressBookHasUnsavedChanges(book) {
 				var error: Unmanaged<CFError>?
-				if !ABAddressBookSave(book, &error) { println("Failed to save address book: \(error)") }
+				if !ABAddressBookSave(book, &error) { print("Failed to save address book: \(error)") }
 			}
 			completion?()
 		}
@@ -80,19 +81,18 @@ public class Swab: NSObject {
 	
 	public func findAllPeopleWith(firstName: String? = nil, lastName: String? = nil, company: String? = nil, fields: [ABPropertyID]? = SwabRecord.allProperties, completion: ([SwabRecord]) -> Void) {
 		self.fetchAddressBook { book in
-			var empty = ""
-			var fieldSet = Set(fields ?? [])
-			var full: String = "\(firstName ?? empty) \(lastName ?? empty)".stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+			let empty = ""
+			let fieldSet = Set(fields ?? [])
+			let full: String = "\(firstName ?? empty) \(lastName ?? empty)".stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
 			var records: [SwabRecord] = []
 			
 			for string in [full, company] {
 				if let searchString = string {
-					if let found = ABAddressBookCopyPeopleWithName(book, searchString).takeRetainedValue() as? [ABRecord] {
-						for record in found {
-							let swab = self.recordWithABRecord(record)
-							if let fields = fields { swab.load(fields: fieldSet) }
-							records.append(swab)
-						}
+					let found = ABAddressBookCopyPeopleWithName(book, searchString).takeRetainedValue() as [ABRecord]
+					for record in found {
+						let swab = self.recordWithABRecord(record)
+						swab.load(fieldSet)
+						records.append(swab)
 					}
 				}
 			}
@@ -102,7 +102,7 @@ public class Swab: NSObject {
 	
 	public func findRecordWithID(recordID: ABRecordID, completion: (SwabRecord?) -> Void) {
 		self.fetchAddressBook { book in
-			var record: ABRecord? = ABAddressBookGetPersonWithRecordID(book, recordID)?.takeRetainedValue()
+			let record: ABRecord? = ABAddressBookGetPersonWithRecordID(book, recordID)?.takeRetainedValue()
 			completion(record == nil ? nil : self.recordWithABRecord(record!))
 		}
 	}
@@ -114,12 +114,11 @@ public class Swab: NSObject {
 				completion([])
 				return
 			}
-			if let found = ABAddressBookCopyArrayOfAllPeople(book).takeRetainedValue() as? [ABRecord] {
-				for record in found {
-					let swab = self.recordWithABRecord(record)
-					if fields.count > 0 { swab.load(fields: Set(fields)) }
-					records.append(swab)
-				}
+			let found = ABAddressBookCopyArrayOfAllPeople(book).takeRetainedValue() as [ABRecord]
+			for record in found {
+				let swab = self.recordWithABRecord(record)
+				if fields.count > 0 { swab.load(Set(fields)) }
+				records.append(swab)
 			}
 			completion(records)
 		}
@@ -132,22 +131,21 @@ public class Swab: NSObject {
 	public func importVCardData(data: NSData, filterDuplicates: Bool = true, completion: (([SwabRecord]) -> Void)? = nil) {
 		self.fetchAddressBook { book in
 			var created: [SwabRecord] = []
-			var source: ABRecord = ABAddressBookCopyDefaultSource(book).takeUnretainedValue()
+			let source: ABRecord = ABAddressBookCopyDefaultSource(book).takeUnretainedValue()
 			
-			if let newRecords = ABPersonCreatePeopleInSourceWithVCardRepresentation(source, data).takeRetainedValue() as? [ABRecord] {
-				for card in newRecords {
-					var record = self.recordWithABRecord(card)
-					
-					if filterDuplicates {
-						var matching = self.findRecordsMatching(record)
-						if matching.count > 0 { continue }
-					}
-					
-					ABAddressBookAddRecord(book, card, nil)
-					created.append(record)
+			let newRecords = ABPersonCreatePeopleInSourceWithVCardRepresentation(source, data).takeRetainedValue() as [ABRecord]
+			for card in newRecords {
+				let record = self.recordWithABRecord(card)
+				
+				if filterDuplicates {
+					var matching = self.findRecordsMatching(record)
+					if matching.count > 0 { continue }
 				}
-				self.save()
+				
+				ABAddressBookAddRecord(book, card, nil)
+				created.append(record)
 			}
+			self.save()
 			completion?(created)
 		}
 	}
@@ -182,7 +180,7 @@ public class Swab: NSObject {
 		var records: [SwabRecord] = []
 		
 		card.load()
-		self.findAllPeopleWith(firstName: card.firstName, lastName: card.lastName, company: card.companyName) { found in
+		self.findAllPeopleWith(card.firstName, lastName: card.lastName, company: card.companyName) { found in
 			for record in found {
 				if record.isDuplicateOf(card) { records.append(record) }
 			}
@@ -205,7 +203,7 @@ extension Swab {
 		self.authorize { success in
 			if success {
 				dispatch_async(dispatch_get_main_queue()) {
-					var nav = UINavigationController(rootViewController: SelectContactViewController(selected: { record in
+					let nav = UINavigationController(rootViewController: SelectContactViewController(selected: { record in
 						completion(record)
 					}))
 					parent.presentViewController(nav, animated: true, completion: nil)

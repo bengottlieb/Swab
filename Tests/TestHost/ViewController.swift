@@ -26,7 +26,7 @@ class ViewController: UIViewController, MFMailComposeViewControllerDelegate, UIN
 	}
 	
 	@IBAction func chooseContact() {
-		var start = NSDate()
+		//let start = NSDate()
 		Swab.instance.selectContactInViewController(self, animated: true) { record in
 			record?.generateVCard { data in
 				if let data = data {
@@ -37,13 +37,13 @@ class ViewController: UIViewController, MFMailComposeViewControllerDelegate, UIN
 	}
 	
 	@IBAction func shareContactsDB() {
-		Swab.instance.fetchAllRecords(fields: []) { records in
+		Swab.instance.fetchAllRecords([]) { records in
 			SwabRecord.generateVCard(records) { data in
 				dispatch_async(dispatch_get_main_queue()) {
-					var controller = MFMailComposeViewController()
+					let controller = MFMailComposeViewController()
 					
 					controller.setSubject("Contacts.vcard")
-					controller.addAttachmentData(data, mimeType: "text/x-vcard", fileName: "contacts.vcf")
+					controller.addAttachmentData(data!, mimeType: "text/x-vcard", fileName: "contacts.vcf")
 					controller.mailComposeDelegate = self
 					
 					self.presentViewController(controller, animated: true, completion: nil)
@@ -55,7 +55,7 @@ class ViewController: UIViewController, MFMailComposeViewControllerDelegate, UIN
 	}
 	
 	
-	func mailComposeController(controller: MFMailComposeViewController!, didFinishWithResult result: MFMailComposeResult, error: NSError!) {
+	func mailComposeController(controller: MFMailComposeViewController, didFinishWithResult result: MFMailComposeResult, error: NSError?) {
 		controller.dismissViewControllerAnimated(true, completion: nil)
 	}
 
