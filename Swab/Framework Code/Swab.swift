@@ -138,7 +138,7 @@ public class Swab: NSObject {
 				let record = self.recordWithABRecord(card)
 				
 				if filterDuplicates {
-					var matching = self.findRecordsMatching(record)
+					let matching = self.findRecordsMatching(record)
 					if matching.count > 0 { continue }
 				}
 				

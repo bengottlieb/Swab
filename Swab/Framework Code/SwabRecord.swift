@@ -66,7 +66,7 @@ public class SwabRecord: NSObject {
 	public var displayName: String {
 		self.load(Set([kABPersonFirstNameProperty, kABPersonLastNameProperty, kABPersonOrganizationProperty]))
 			
-		var string = "\(self.firstName) \(self.lastName)"
+		let string = "\(self.firstName) \(self.lastName)"
 		if string.characters.count > 1 { return string }
 		
 		return self.companyName
@@ -151,7 +151,7 @@ public class SwabRecord: NSObject {
 	//=============================================================================================
 	//MARK: Loading
 	public func load(fields: Set<ABPropertyID> = Set(SwabRecord.allProperties)) {
-		var fieldsToLoad = fields.subtract(self.loadedFields)
+		let fieldsToLoad = fields.subtract(self.loadedFields)
 		if fieldsToLoad.count == 0 || self.ref == nil { return }
 		
 		self.isLoading = true
