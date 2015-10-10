@@ -11,7 +11,7 @@ import UIKit
 import AddressBook
 
 public class Swab: NSObject {
-	public class var instance: Swab { struct s { static let manager = Swab() }; return s.manager }
+	public static let instance = Swab()
 	
 	public var isAuthorized: Bool { return (ABAddressBookGetAuthorizationStatus() == .Authorized) }
 	
