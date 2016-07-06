@@ -19,7 +19,7 @@ public class SelectContactViewController: UITableViewController {
 		super.init(nibName: nil, bundle: nil)
 		
 		self.completion = selected
-		self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Cancel, target: self, action: "cancel")
+		self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Cancel, target: self, action: #selector(SelectContactViewController.cancel))
 		self.load { }
 	}
 
@@ -161,7 +161,7 @@ class SelectContactTableViewCell: UITableViewCell {
 				self.imageButton?.showsTouchWhenHighlighted = true
 				self.imageButton?.layer.cornerRadius = bounds.size.width / 2
 				self.imageButton?.layer.masksToBounds = true
-				self.imageButton?.addTarget(self, action: "tappedImage:", forControlEvents: .TouchUpInside)
+				self.imageButton?.addTarget(self, action: #selector(SelectContactTableViewCell.tappedImage(_:)), forControlEvents: .TouchUpInside)
 			}
 			self.accessoryView = imageButton
 			self.imageButton?.setBackgroundImage(image, forState: .Normal)
